@@ -1,0 +1,115 @@
+import React from 'react';
+import { X, Minus, Plus, ShoppingBag } from 'lucide-react';
+import { useCart } from '../context/CartContext';
+import Checkout from './Checkout';
+
+interface CartProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
+  const { cartItems, removeFromCart, updateQuantity, getCartTotal } = useCart();
+  const [isCheckoutOpen, setIsCheckoutOpen] = React.useState(false);
+
+  const handleProceedToCheckout = () => {
+    setIsCheckoutOpen(true);
+  };
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 overflow-hidden">
+        <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose} />
+        <div className="absolute right-0 top-0 h-full w-full max-w-sm sm:max-w-md bg-white shadow-xl">
+          <div className="flex h-full flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg sm:text-xl font-semibold">Shopping Cart</h2>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-manipulation"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Cart Items */}
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4">
+              {cartItems.length === 0 ? (
+                <div className="text-center py-12">
+                  <ShoppingBag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 text-sm sm:text-base">Your cart is empty</p>
+                </div>
+              ) : (
+                <div className="space-y-3 sm:space-y-4">
+                  {cartItems.map((item) => (
+                    <div key={item.id} className="flex items-center space-x-3 sm:space-x-4 bg-gray-50 p-3 sm:p-4 rounded-lg">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded flex-shrink-0"
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900 text-sm sm:text-base leading-tight">{item.name}</h3>
+                        <p className="text-sm text-gray-600">LKR {item.price.toLocaleString()}</p>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="p-1 hover:bg-gray-200 rounded transition-colors touch-manipulation"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <span className="px-2 py-1 bg-white rounded border text-sm min-w-[2rem] text-center">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="p-1 hover:bg-gray-200 rounded transition-colors touch-manipulation"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        className="p-2 hover:bg-gray-200 rounded transition-colors touch-manipulation flex-shrink-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            {cartItems.length > 0 && (
+              <div className="border-t p-3 sm:p-4 space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-base sm:text-lg font-semibold">Total:</span>
+                  <span className="text-xl sm:text-2xl font-bold text-green-600">
+                    LKR {getCartTotal().toLocaleString()}
+                  </span>
+                </div>
+                <button 
+                  onClick={handleProceedToCheckout}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 sm:py-4 px-4 rounded-lg transition-colors text-base touch-manipulation"
+                >
+                  Proceed to Checkout
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      <Checkout 
+        isOpen={isCheckoutOpen} 
+        onClose={() => setIsCheckoutOpen(false)} 
+      />
+    </>
+  );
+};
+
+export default Cart;
