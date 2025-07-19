@@ -36,7 +36,7 @@ const AgentContact: React.FC = () => {
     },
     {
       id: 3,
-      name: 'Dr. Emily Rodriguez',
+      name: 'Dr. sanajna Rodriguez',
       specialty: 'Crop Disease Management',
       experience: '18 years',
       rating: 4.9,
