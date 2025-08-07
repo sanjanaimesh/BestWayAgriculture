@@ -1,26 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../components/Auth/Providers/AuthProvider';
 
 const AdminLogin = (): JSX.Element => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, userRole } = useAuth();
+  const { login, userRole, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Add useEffect to handle navigation when userRole changes
+  useEffect(() => {
+    if (userRole === 'admin') {
+      navigate('/admin');
+    } else if (userRole && userRole !== 'admin') {
+      setError('Access denied. Admin credentials required.');
+      // Logout non-admin users who try to access admin page
+      logout();
+    }
+  }, [userRole, navigate, logout]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(''); // Clear any previous errors
     const success = login(username, password);
-    if (success && userRole === 'admin') {
-      navigate('/admin');
-    } else if (success && userRole !== 'admin') {
-      setError('Access denied. Admin credentials required.');
-      // You might want to logout the user here since they're not admin
-      // logout();
-    } else {
-      setError('Invalid admin credentials');
+    
+    if (!success) {
+      setError('Invalid credentials');
     }
+    // The role check and navigation will now be handled by the useEffect
   };
 
   return (

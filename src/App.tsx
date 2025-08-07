@@ -12,7 +12,7 @@ import SideNav from './components/Admin';
 import AdminLogin from './components/Auth/AdminLogin';
 import UserLogin from './components/Auth/UserLogin';
 import ProtectedRoute from './../src/components/Routes/ProtectRoutes';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from '../src/components/Auth/Providers/AuthProvider';
 
 type SectionType = 'home' | 'about' | 'products' | 'agents';
 
