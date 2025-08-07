@@ -9,7 +9,9 @@ import Footer from './components/Footer';
 import Cart from './components/Cart';
 import { CartProvider } from './context/CartContext';
 import SideNav from './components/Admin';
-import Login from './components/Auth/Login';
+import AdminLogin from './components/Auth/AdminLogin';
+import UserLogin from './components/Auth/UserLogin';
+import ProtectedRoute from './../src/components/Routes/ProtectRoutes';
 import { AuthProvider } from './context/AuthContext';
 
 type SectionType = 'home' | 'about' | 'products' | 'agents';
@@ -26,8 +28,9 @@ function App(): JSX.Element {
             <Header activeSection={activeSection} setActiveSection={setActiveSection} setIsCartOpen={setIsCartOpen} />
             <main>
               <Routes>
-                <Route path="/admin/login" element={<Login />} />
-                <Route path="/admin" element={<SideNav />} />
+                {/* Public Routes */}
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/login" element={<UserLogin />} />
                 <Route path="/about" element={<AboutUs />} />
                 <Route path="/products" element={<ProductCatalog />} />
                 <Route path="/agents" element={<AgentContact />} />
@@ -38,6 +41,16 @@ function App(): JSX.Element {
                     <AgentContact />
                   </>
                 } />
+                
+                {/* Protected Admin Routes */}
+                <Route path="/admin" element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <SideNav />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Catch all route */}
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
             <Footer setActiveSection={setActiveSection} />

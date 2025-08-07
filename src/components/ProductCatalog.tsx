@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Loader2 } from 'lucide-react';
+import { Plus, Search, Loader2, Check } from 'lucide-react';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import { Product } from '../types';
@@ -10,6 +10,7 @@ const ProductCatalog: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [addedToCartId, setAddedToCartId] = useState<number | null>(null);
 
   // Fetch seeds from API
   useEffect(() => {
@@ -37,6 +38,12 @@ const ProductCatalog: React.FC = () => {
 
   const handleAddToCart = (product: Product) => {
     addToCart(product);
+    setAddedToCartId(product.id);
+    
+    // Reset the success state after 2 seconds
+    setTimeout(() => {
+      setAddedToCartId(null);
+    }, 2000);
   };
 
   if (loading) {
@@ -131,10 +138,24 @@ const ProductCatalog: React.FC = () => {
                   </div>
                   <button
                     onClick={() => handleAddToCart(product)}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center text-base"
+                    disabled={addedToCartId === product.id}
+                    className={`w-full font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center text-base ${
+                      addedToCartId === product.id
+                        ? 'bg-green-500 text-white cursor-not-allowed'
+                        : 'bg-green-600 hover:bg-green-700 text-white'
+                    }`}
                   >
-                    <Plus className="h-5 w-5 mr-2" />
-                    Add to Cart
+                    {addedToCartId === product.id ? (
+                      <>
+                        <Check className="h-5 w-5 mr-2" />
+                        Added to Cart!
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="h-5 w-5 mr-2" />
+                        Add to Cart
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
