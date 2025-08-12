@@ -145,3 +145,4 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
 };
 
 export default Cart;
+

@@ -4,14 +4,11 @@ const mysql = require('mysql2/promise');
 const express = require('express');
 const cors = require('cors');
 
-
 const app = express();
 const PORT = 4000;
 
 // Create MySQL connection pool
 const pool = mysql.createPool(database);
-
-
 
 // Enable CORS for all origins
 app.use(cors({
@@ -32,6 +29,8 @@ app.get('/', (req, res) => {
 app.get('/addcart', (req, res) => {
   res.send('MySQL Database Connected Successfully!');
 });
+
+// ==================== PRODUCTS ROUTES ====================
 
 // Get all products
 app.get('/products', async (req, res) => {
@@ -327,10 +326,286 @@ app.get('/categories', async (req, res) => {
   }
 });
 
+// ==================== ORDERS ROUTES ====================
+
+// Create a new order
+app.post('/orders', async (req, res) => {
+  const connection = await pool.getConnection();
+  
+  try {
+    await connection.beginTransaction();
+
+    const {
+      orderNumber,
+      customerInfo,
+      items,
+      subtotal,
+      shipping,
+      total,
+      status = 'pending'
+    } = req.body;
+
+    // Validate required fields
+    if (!orderNumber || !customerInfo || !items || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Order number, customer info, and items are required"
+      });
+    }
+
+    // Insert main order record
+    const [orderResult] = await connection.execute(`
+      INSERT INTO orders (
+        order_number, 
+        customer_first_name, 
+        customer_last_name, 
+        customer_email, 
+        customer_phone,
+        shipping_address,
+        shipping_city,
+        shipping_postal_code,
+        shipping_province,
+        subtotal,
+        shipping_cost,
+        total,
+        status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      orderNumber,
+      customerInfo.firstName,
+      customerInfo.lastName,
+      customerInfo.email,
+      customerInfo.phone,
+      customerInfo.address,
+      customerInfo.city,
+      customerInfo.postalCode,
+      customerInfo.province,
+      subtotal,
+      shipping,
+      total,
+      status
+    ]);
+
+    const orderId = orderResult.insertId;
+
+    // Insert order items
+    for (const item of items) {
+      await connection.execute(`
+        INSERT INTO order_items (
+          order_id,
+          product_id,
+          product_name,
+          quantity,
+          price,
+          total_price
+        ) VALUES (?, ?, ?, ?, ?, ?)
+      `, [
+        orderId,
+        item.id,
+        item.name,
+        item.quantity,
+        item.price,
+        item.price * item.quantity
+      ]);
+
+      // Optional: Update product stock
+      await connection.execute(`
+        UPDATE products 
+        SET stock = stock - ? 
+        WHERE id = ? AND stock >= ?
+      `, [item.quantity, item.id, item.quantity]);
+    }
+
+    await connection.commit();
+
+    // Get the complete order with items
+    const [orderRows] = await connection.execute(`
+      SELECT o.*, 
+             GROUP_CONCAT(
+               JSON_OBJECT(
+                 'product_id', oi.product_id,
+                 'product_name', oi.product_name,
+                 'quantity', oi.quantity,
+                 'price', oi.price,
+                 'total_price', oi.total_price
+               )
+             ) as items
+      FROM orders o
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      WHERE o.id = ?
+      GROUP BY o.id
+    `, [orderId]);
+
+    res.status(201).json({
+      success: true,
+      message: "Order created successfully",
+      data: {
+        ...orderRows[0],
+        items: orderRows[0].items ? JSON.parse(`[${orderRows[0].items}]`) : []
+      }
+    });
+
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error creating order:', error);
+    res.status(500).json({
+      success: false,
+      message: "Error creating order",
+      error: error.message
+    });
+  } finally {
+    connection.release();
+  }
+});
+
+// Get all orders
+app.get('/orders', async (req, res) => {
+  try {
+    const [rows] = await pool.execute(`
+      SELECT o.*, 
+             COUNT(oi.id) as item_count
+      FROM orders o
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      GROUP BY o.id
+      ORDER BY o.created_at DESC
+    `);
+
+    res.json({
+      success: true,
+      message: "Orders retrieved successfully",
+      data: rows
+    });
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching orders",
+      error: error.message
+    });
+  }
+});
+
+// Get a specific order by ID
+app.get('/orders/:id', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.id);
+
+    const [orderRows] = await pool.execute(`
+      SELECT * FROM orders WHERE id = ?
+    `, [orderId]);
+
+    if (orderRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found"
+      });
+    }
+
+    const [itemRows] = await pool.execute(`
+      SELECT * FROM order_items WHERE order_id = ?
+    `, [orderId]);
+
+    res.json({
+      success: true,
+      message: "Order retrieved successfully",
+      data: {
+        ...orderRows[0],
+        items: itemRows
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching order:', error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching order",
+      error: error.message
+    });
+  }
+});
+
+// Get order by order number
+app.get('/orders/number/:orderNumber', async (req, res) => {
+  try {
+    const orderNumber = req.params.orderNumber;
+
+    const [orderRows] = await pool.execute(`
+      SELECT * FROM orders WHERE order_number = ?
+    `, [orderNumber]);
+
+    if (orderRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found"
+      });
+    }
+
+    const [itemRows] = await pool.execute(`
+      SELECT * FROM order_items WHERE order_id = ?
+    `, [orderRows[0].id]);
+
+    res.json({
+      success: true,
+      message: "Order retrieved successfully",
+      data: {
+        ...orderRows[0],
+        items: itemRows
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching order by number:', error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching order",
+      error: error.message
+    });
+  }
+});
+
+// Update order status
+app.put('/orders/:id/status', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.id);
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: "Status is required"
+      });
+    }
+
+    const [result] = await pool.execute(`
+      UPDATE orders SET status = ? WHERE id = ?
+    `, [status, orderId]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found"
+      });
+    }
+
+    const [orderRows] = await pool.execute(`
+      SELECT * FROM orders WHERE id = ?
+    `, [orderId]);
+
+    res.json({
+      success: true,
+      message: "Order status updated successfully",
+      data: orderRows[0]
+    });
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating order status",
+      error: error.message
+    });
+  }
+});
+
 // Initialize database and start server
 const startServer = async () => {
-  
-  
   app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
     console.log('MySQL Database connected successfully!');

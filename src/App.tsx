@@ -13,6 +13,7 @@ import AdminLogin from './components/Auth/AdminLogin';
 import UserLogin from './components/Auth/UserLogin';
 import ProtectedRoute from './../src/components/Routes/ProtectRoutes';
 import { AuthProvider } from '../src/components/Auth/Providers/AuthProvider';
+import AdminPanel from './components/Admin';
 
 type SectionType = 'home' | 'about' | 'products' | 'agents';
 
@@ -45,7 +46,7 @@ function App(): JSX.Element {
                 {/* Protected Admin Routes */}
                 <Route path="/admin" element={
                   <ProtectedRoute requireAdmin={true}>
-                    <SideNav />
+                    <AdminPanel/>
                   </ProtectedRoute>
                 } />
                 

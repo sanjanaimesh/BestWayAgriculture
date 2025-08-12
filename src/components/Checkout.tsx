@@ -12,6 +12,8 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [orderId, setOrderId] = useState(null);
 
   const [shippingInfo, setShippingInfo] = useState({
     firstName: '',
@@ -43,9 +45,62 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
     'Sabaragamuwa Province'
   ];
 
-  const handleShippingSubmit = (e: React.FormEvent) => {
+  // Save order to database
+  const saveOrderToDatabase = async () => {
+    try {
+      const orderNum = 'BWA' + Date.now().toString().slice(-6);
+      
+      const orderData = {
+        orderNumber: orderNum,
+        customerInfo: shippingInfo,
+        items: cartItems,
+        subtotal: getCartTotal(),
+        shipping: 500,
+        total: getCartTotal() + 500,
+        status: 'pending'
+      };
+
+      const response = await fetch('http://localhost:4000/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create order');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setOrderNumber(orderNum);
+        setOrderId(result.data.id);
+        return orderNum;
+      } else {
+        throw new Error(result.message || 'Failed to create order');
+      }
+    } catch (error) {
+      console.error('Error saving order:', error);
+      throw error;
+    }
+  };
+
+  const handleShippingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCurrentStep(2);
+    setIsLoading(true);
+    
+    try {
+      // Save order to database when continuing to payment
+      await saveOrderToDatabase();
+      setCurrentStep(2);
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Failed to create order. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePaymentSubmit = (e: React.FormEvent) => {
@@ -54,17 +109,15 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
   };
 
   const handlePlaceOrder = () => {
-    // Generate order number
-    const orderNum = 'BWA' + Date.now().toString().slice(-6);
-    setOrderNumber(orderNum);
+    // Order is already saved in database, just show success message
     setOrderPlaced(true);
     clearCart();
     
-    // In a real app, you would send this data to your backend
-    console.log('Order placed:', {
-      orderNumber: orderNum,
+    console.log('Order completed:', {
+      orderNumber,
+      orderId,
       items: cartItems,
-      total: getCartTotal(),
+      total: getCartTotal() + 500,
       shipping: shippingInfo,
       payment: paymentInfo
     });
@@ -74,6 +127,7 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
     setCurrentStep(1);
     setOrderPlaced(false);
     setOrderNumber('');
+    setOrderId(null);
     setShippingInfo({
       firstName: '',
       lastName: '',
@@ -266,9 +320,10 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
                   </div>
                   <button
                     type="submit"
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                    disabled={isLoading}
+                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
                   >
-                    Continue to Payment
+                    {isLoading ? 'Creating Order...' : 'Continue to Payment'}
                   </button>
                 </form>
               )}
@@ -290,6 +345,18 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
                       Back
                     </button>
                   </div>
+                  
+                  {orderNumber && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                      <p className="text-sm text-blue-800">
+                        <strong>Order Number:</strong> {orderNumber}
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        Your order has been saved to our system.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">Card Number</label>
@@ -357,6 +424,17 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
                       Back
                     </button>
                   </div>
+
+                  {orderNumber && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                      <p className="text-sm text-green-800">
+                        <strong>Order Number:</strong> {orderNumber}
+                      </p>
+                      <p className="text-xs text-green-600 mt-1">
+                        Your order is saved and ready to be completed.
+                      </p>
+                    </div>
+                  )}
                   
                   <div className="bg-gray-50 rounded-lg p-4 mb-6">
                     <h4 className="font-semibold mb-2">Shipping Address</h4>
@@ -380,7 +458,7 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
                     onClick={handlePlaceOrder}
                     className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-4 rounded-lg transition-colors text-lg"
                   >
-                    Place Order - LKR {getCartTotal().toLocaleString()}
+                    Complete Order - LKR {(getCartTotal() + 500).toLocaleString()}
                   </button>
                 </div>
               )}
