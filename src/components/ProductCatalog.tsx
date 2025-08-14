@@ -39,7 +39,7 @@ const ProductCatalog: React.FC = () => {
   const handleAddToCart = (product: Product) => {
     addToCart(product);
     setAddedToCartId(product.id);
-    
+
     // Reset the success state after 2 seconds
     setTimeout(() => {
       setAddedToCartId(null);
@@ -134,16 +134,39 @@ const ProductCatalog: React.FC = () => {
                     <span className="text-xl sm:text-2xl font-bold text-green-600">
                       LKR {product.price.toLocaleString()}
                     </span>
-                    <span className="text-sm text-gray-500">{product.stock} in stock</span>
+
+                    {product.stock === 0 ? (
+                      <span className="text-sm text-red-500">Out of stock</span>
+                    ) : (
+                      <span className="text-sm text-gray-500">{product.stock} in stock</span>
+                    )}
                   </div>
-                  <button
+                   {product.stock === 0 ? (
+                      <button
+                      style={{cursor:"not-allowed"}}
+                    onClick={() => handleAddToCart(product)}
+                    disabled={true}
+                    
+                    className={`w-full font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center text-base ${addedToCartId === product.id
+                        ? 'bg-green-500 text-white cursor-not-allowed'
+                        : 'bg-green-600 hover:bg-red-700 text-white'
+                      }`}
+                  >
+                   
+                      <>
+                        <Plus className="h-5 w-5 mr-2" />
+                        Add to Cart
+                      </>
+               
+                  </button>
+                    ) : (
+                       <button
                     onClick={() => handleAddToCart(product)}
                     disabled={addedToCartId === product.id}
-                    className={`w-full font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center text-base ${
-                      addedToCartId === product.id
+                    className={`w-full font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center text-base ${addedToCartId === product.id
                         ? 'bg-green-500 text-white cursor-not-allowed'
                         : 'bg-green-600 hover:bg-green-700 text-white'
-                    }`}
+                      }`}
                   >
                     {addedToCartId === product.id ? (
                       <>
@@ -157,6 +180,8 @@ const ProductCatalog: React.FC = () => {
                       </>
                     )}
                   </button>
+                    )}
+                 
                 </div>
               </div>
             ))}

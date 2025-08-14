@@ -1,12 +1,174 @@
 import React, { useState } from 'react';
 import { X, CreditCard, Truck, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { loadStripe } from '@stripe/stripe-js';
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js';
+
+// Initialize Stripe with your publishable key
+// Replace with your actual Stripe publishable key
+const stripePromise = loadStripe('pk_test_51RvJvWCs4Jxtyk6HXo6CViF3dFngVOZbruNw8Ii6RMcrarq0oWE9evWhYbp0JFVj9JwSz6RxzU1SxU1fHHfcChnY00m7xqMabW');
 
 interface CheckoutProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+// Stripe Card Element options
+const CARD_ELEMENT_OPTIONS = {
+  style: {
+    base: {
+      color: '#32325d',
+      fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+      fontSmoothing: 'antialiased',
+      fontSize: '16px',
+      '::placeholder': {
+        color: '#aab7c4',
+      },
+    },
+    invalid: {
+      color: '#fa755a',
+      iconColor: '#fa755a',
+    },
+  },
+};
+
+// Payment Form Component
+const PaymentForm: React.FC<{
+  onSuccess: (paymentMethod: any) => void;
+  onBack: () => void;
+  amount: number;
+  orderNumber: string;
+}> = ({ onSuccess, onBack, amount, orderNumber }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [error, setError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
+  const [cardholderName, setCardholderName] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    setProcessing(true);
+    setError(null);
+
+    const cardElement = elements.getElement(CardElement);
+
+    if (!cardElement) {
+      return;
+    }
+
+    // Create payment method
+    const { error, paymentMethod } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardElement,
+      billing_details: {
+        name: cardholderName,
+      },
+    });
+
+    if (error) {
+      setError(error.message || 'An error occurred');
+      setProcessing(false);
+    } else {
+      // In a real application, you would send the paymentMethod.id to your server
+      // to create a payment intent and complete the payment
+      console.log('Payment Method Created:', paymentMethod);
+      setProcessing(false);
+      onSuccess(paymentMethod);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xl font-semibold flex items-center">
+          <CreditCard className="h-6 w-6 mr-2" />
+          Payment Information
+        </h3>
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex items-center text-green-600 hover:text-green-700"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back
+        </button>
+      </div>
+
+      {orderNumber && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <p className="text-sm text-blue-800">
+            <strong>Order Number:</strong> {orderNumber}
+          </p>
+          <p className="text-xs text-blue-600 mt-1">
+            Your order has been saved to our system.
+          </p>
+        </div>
+      )}
+
+      {/* Test Card Information */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+        <h4 className="font-semibold text-yellow-800 mb-2">Test Card Numbers</h4>
+        <div className="text-sm text-yellow-700 space-y-1">
+          <p><strong>Success:</strong> 4242 4242 4242 4242</p>
+          <p><strong>Requires Authentication:</strong> 4000 0025 0000 3155</p>
+          <p><strong>Declined:</strong> 4000 0000 0000 9995</p>
+          <p className="mt-2">Use any future date for expiry and any 3 digits for CVC</p>
+        </div>
+      </div>
+
+      <div className="space-y-4 mb-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Cardholder Name
+          </label>
+          <input
+            type="text"
+            required
+            value={cardholderName}
+            onChange={(e) => setCardholderName(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            placeholder="John Doe"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Card Details
+          </label>
+          <div className="p-3 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500">
+            <CardElement options={CARD_ELEMENT_OPTIONS} />
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+          <p className="text-sm text-red-800">{error}</p>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={!stripe || processing}
+        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+      >
+        {processing ? 'Processing...' : `Pay LKR ${amount.toLocaleString()}`}
+      </button>
+    </form>
+  );
+};
+
+// Main Checkout Component
 const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
   const { cartItems, getCartTotal, clearCart } = useCart();
   const [currentStep, setCurrentStep] = useState(1);
@@ -14,6 +176,7 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
   const [orderNumber, setOrderNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [orderId, setOrderId] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState<any>(null);
 
   const [shippingInfo, setShippingInfo] = useState({
     firstName: '',
@@ -24,13 +187,6 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
     city: '',
     postalCode: '',
     province: ''
-  });
-
-  const [paymentInfo, setPaymentInfo] = useState({
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-    cardName: ''
   });
 
   const provinces = [
@@ -103,24 +259,51 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handlePaymentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handlePaymentSuccess = (paymentMethod: any) => {
+    setPaymentMethod(paymentMethod);
     setCurrentStep(3);
   };
 
-  const handlePlaceOrder = () => {
-    // Order is already saved in database, just show success message
-    setOrderPlaced(true);
-    clearCart();
+  const handlePlaceOrder = async () => {
+    setIsLoading(true);
     
-    console.log('Order completed:', {
-      orderNumber,
-      orderId,
-      items: cartItems,
-      total: getCartTotal() + 500,
-      shipping: shippingInfo,
-      payment: paymentInfo
-    });
+    try {
+      // Update order with payment information
+      const updateData = {
+        paymentMethodId: paymentMethod.id,
+        paymentStatus: 'completed',
+        status: 'confirmed'
+      };
+
+      const response = await fetch(`http://localhost:4000/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update order');
+      }
+
+      setOrderPlaced(true);
+      clearCart();
+      
+      console.log('Order completed:', {
+        orderNumber,
+        orderId,
+        items: cartItems,
+        total: getCartTotal() + 500,
+        shipping: shippingInfo,
+        paymentMethod
+      });
+    } catch (error) {
+      console.error('Error completing order:', error);
+      alert('Failed to complete order. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const resetCheckout = () => {
@@ -128,6 +311,7 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
     setOrderPlaced(false);
     setOrderNumber('');
     setOrderId(null);
+    setPaymentMethod(null);
     setShippingInfo({
       firstName: '',
       lastName: '',
@@ -137,12 +321,6 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
       city: '',
       postalCode: '',
       province: ''
-    });
-    setPaymentInfo({
-      cardNumber: '',
-      expiryDate: '',
-      cvv: '',
-      cardName: ''
     });
   };
 
@@ -226,7 +404,7 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
               </div>
 
               {/* Step 1: Shipping Information */}
-              {currentStep === 1 && (
+                            {currentStep === 1 && (
                 <form onSubmit={handleShippingSubmit}>
                   <h3 className="text-xl font-semibold mb-4 flex items-center">
                     <Truck className="h-6 w-6 mr-2" />
@@ -328,87 +506,16 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
                 </form>
               )}
 
-              {/* Step 2: Payment Information */}
+              {/* Step 2: Payment Information with Stripe */}
               {currentStep === 2 && (
-                <form onSubmit={handlePaymentSubmit}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-semibold flex items-center">
-                      <CreditCard className="h-6 w-6 mr-2" />
-                      Payment Information
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(1)}
-                      className="flex items-center text-green-600 hover:text-green-700"
-                    >
-                      <ArrowLeft className="h-4 w-4 mr-1" />
-                      Back
-                    </button>
-                  </div>
-                  
-                  {orderNumber && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                      <p className="text-sm text-blue-800">
-                        <strong>Order Number:</strong> {orderNumber}
-                      </p>
-                      <p className="text-xs text-blue-600 mt-1">
-                        Your order has been saved to our system.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Card Number</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="1234 5678 9012 3456"
-                        value={paymentInfo.cardNumber}
-                        onChange={(e) => setPaymentInfo({...paymentInfo, cardNumber: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Expiry Date</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="MM/YY"
-                        value={paymentInfo.expiryDate}
-                        onChange={(e) => setPaymentInfo({...paymentInfo, expiryDate: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">CVV</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="123"
-                        value={paymentInfo.cvv}
-                        onChange={(e) => setPaymentInfo({...paymentInfo, cvv: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Cardholder Name</label>
-                      <input
-                        type="text"
-                        required
-                        value={paymentInfo.cardName}
-                        onChange={(e) => setPaymentInfo({...paymentInfo, cardName: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      />
-                    </div>
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
-                  >
-                    Review Order
-                  </button>
-                </form>
+                <Elements stripe={stripePromise}>
+                  <PaymentForm
+                    onSuccess={handlePaymentSuccess}
+                    onBack={() => setCurrentStep(1)}
+                    amount={getCartTotal() + 500}
+                    orderNumber={orderNumber}
+                  />
+                </Elements>
               )}
 
               {/* Step 3: Order Review */}
@@ -449,16 +556,21 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
                   <div className="bg-gray-50 rounded-lg p-4 mb-6">
                     <h4 className="font-semibold mb-2">Payment Method</h4>
                     <p className="text-sm text-gray-600">
-                      Card ending in {paymentInfo.cardNumber.slice(-4)}<br />
-                      {paymentInfo.cardName}
+                      {paymentMethod && (
+                        <>
+                          {paymentMethod.card.brand.toUpperCase()} ending in {paymentMethod.card.last4}<br />
+                          Expires: {paymentMethod.card.exp_month}/{paymentMethod.card.exp_year}
+                        </>
+                      )}
                     </p>
                   </div>
 
                   <button
                     onClick={handlePlaceOrder}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-4 rounded-lg transition-colors text-lg"
+                    disabled={isLoading}
+                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-4 px-4 rounded-lg transition-colors text-lg"
                   >
-                    Complete Order - LKR {(getCartTotal() + 500).toLocaleString()}
+                    {isLoading ? 'Processing...' : `Complete Order - LKR ${(getCartTotal() + 500).toLocaleString()}`}
                   </button>
                 </div>
               )}

@@ -36,16 +36,42 @@ const Orders = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`${API_BASE}/orders`);
-      if (!response.ok) throw new Error('Failed to fetch orders');
-      const data = await response.json();
+      console.log('Fetching orders from:', `${API_BASE}/orders`);
       
-      // Ensure data is always an array
-      const ordersArray = Array.isArray(data) ? data : (data.orders || []);
+      const response = await fetch(`${API_BASE}/orders`);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Raw API response:', data);
+      console.log('Type of data:', typeof data);
+      console.log('Is data an array?', Array.isArray(data));
+      
+      // More flexible data handling
+      let ordersArray = [];
+      if (Array.isArray(data)) {
+        ordersArray = data;
+      } else if (data && Array.isArray(data.orders)) {
+        ordersArray = data.orders;
+      } else if (data && Array.isArray(data.data)) {
+        ordersArray = data.data;
+      } else if (data && typeof data === 'object') {
+        // If it's a single order object, wrap it in an array
+        ordersArray = [data];
+      }
+      
+      console.log('Processed orders array:', ordersArray);
+      console.log('Orders count:', ordersArray.length);
+      
       setOrders(ordersArray);
     } catch (err) {
+      console.error('Fetch error:', err);
       setError('Failed to load orders: ' + err.message);
-      setOrders([]); // Set empty array on error
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -60,7 +86,6 @@ const Orders = () => {
     setLoading(true);
     setError('');
     try {
-      // Remove any undefined or empty fields and ensure proper data types
       const cleanData = {
         order_number: orderData.order_number?.toString() || '',
         customer_first_name: orderData.customer_first_name?.toString() || '',
@@ -74,10 +99,16 @@ const Orders = () => {
         subtotal: parseFloat(orderData.subtotal || 0).toFixed(2),
         shipping_cost: parseFloat(orderData.shipping_cost || 0).toFixed(2),
         total: parseFloat(orderData.total || 0).toFixed(2),
-        status: orderData.status || 'pending'
+        status: orderData.status || 'pending',
+        items: orderData.items?.map(item => ({
+          product_name: item.product_name?.toString() || '',
+          quantity: parseInt(item.quantity) || 1,
+          price: parseFloat(item.price || 0).toFixed(2),
+          total: parseFloat(item.total || 0).toFixed(2)
+        })) || []
       };
 
-      console.log('Creating order with data:', cleanData); // Debug log
+      console.log('Creating order with data:', cleanData);
 
       const response = await fetch(`${API_BASE}/orders`, {
         method: 'POST',
@@ -93,7 +124,7 @@ const Orders = () => {
         throw new Error(`Failed to create order: ${response.status} - ${errorData}`);
       }
 
-      await fetchOrders(); // Refresh the list
+      await fetchOrders();
       setShowCreateModal(false);
     } catch (err) {
       console.error('Create order error:', err);
@@ -108,7 +139,6 @@ const Orders = () => {
     setLoading(true);
     setError('');
     try {
-      // Clean and format the data similar to create
       const cleanData = {
         order_number: orderData.order_number?.toString() || '',
         customer_first_name: orderData.customer_first_name?.toString() || '',
@@ -122,10 +152,16 @@ const Orders = () => {
         subtotal: parseFloat(orderData.subtotal || 0).toFixed(2),
         shipping_cost: parseFloat(orderData.shipping_cost || 0).toFixed(2),
         total: parseFloat(orderData.total || 0).toFixed(2),
-        status: orderData.status || 'pending'
+        status: orderData.status || 'pending',
+        items: orderData.items?.map(item => ({
+          product_name: item.product_name?.toString() || '',
+          quantity: parseInt(item.quantity) || 1,
+          price: parseFloat(item.price || 0).toFixed(2),
+          total: parseFloat(item.total || 0).toFixed(2)
+        })) || []
       };
 
-      console.log('Updating order', orderId, 'with data:', cleanData); // Debug log
+      console.log('Updating order', orderId, 'with data:', cleanData);
 
       const response = await fetch(`${API_BASE}/orders/${orderId}`, {
         method: 'PUT',
@@ -141,11 +177,10 @@ const Orders = () => {
         throw new Error(`Failed to update order: ${response.status} - ${errorData}`);
       }
 
-      await fetchOrders(); // Refresh the list
+      await fetchOrders();
       setEditingOrder(null);
       
       if (selectedOrder && selectedOrder.id === orderId) {
-        // Update the selected order in the details modal
         const updatedOrders = Array.isArray(orders) ? orders : [];
         const updatedOrder = updatedOrders.find(o => o.id === orderId);
         if (updatedOrder) {
@@ -167,7 +202,7 @@ const Orders = () => {
     setLoading(true);
     setError('');
     try {
-      console.log('Deleting order:', orderId); // Debug log
+      console.log('Deleting order:', orderId);
 
       const response = await fetch(`${API_BASE}/orders/${orderId}`, {
         method: 'DELETE',
@@ -182,7 +217,7 @@ const Orders = () => {
         throw new Error(`Failed to delete order: ${response.status} - ${errorData}`);
       }
 
-      await fetchOrders(); // Refresh the list
+      await fetchOrders();
       
       if (selectedOrder && selectedOrder.id === orderId) {
         setShowOrderDetails(false);
@@ -198,11 +233,36 @@ const Orders = () => {
 
   // Update order status quickly
   const updateOrderStatus = async (orderId, newStatus) => {
-    const order = Array.isArray(orders) ? orders.find(o => o.id === orderId) : null;
-    if (!order) return;
+  try {
+    console.log(`Updating order ${orderId} status to: ${newStatus}`);
+    
+    // Use the status-specific endpoint
+    const response = await fetch(`http://localhost:4000/orders/${orderId}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      // Only send the status field
+      body: JSON.stringify({ 
+        status: newStatus 
+      }),
+    });
 
-    await updateOrder(orderId, { ...order, status: newStatus });
-  };
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Status update error:', response.status, errorData);
+      throw new Error(`Failed to update order status: ${response.status} - ${JSON.stringify(errorData)}`);
+    }
+
+    const result = await response.json();
+    console.log('Status update successful:', result);
+    return result.data; // Return the updated order
+    
+  } catch (error) {
+    console.error('Update order status error:', error);
+    throw error;
+  }
+};
 
   const filteredOrders = Array.isArray(orders) ? orders.filter(order => {
     const searchFields = [
@@ -218,7 +278,6 @@ const Orders = () => {
   }) : [];
 
   const getOrderStats = () => {
-    // Ensure orders is always an array before calculating stats
     const ordersArray = Array.isArray(orders) ? orders : [];
     
     const stats = {
@@ -235,6 +294,26 @@ const Orders = () => {
 
   const stats = getOrderStats();
 
+  // Helper function to get status icon safely
+  const getStatusIcon = (status) => {
+    return statusIcons[status] || Package; // Default to Package icon if status not found
+  };
+
+  // Test API Connection Button
+  const testConnection = async () => {
+    try {
+      console.log('Testing API connection...');
+      const response = await fetch(`${API_BASE}/orders`);
+      console.log('Test response status:', response.status);
+      const text = await response.text();
+      console.log('Test response body:', text);
+      alert(`API Test:\nStatus: ${response.status}\nResponse: ${text.substring(0, 200)}...`);
+    } catch (err) {
+      console.error('Connection test failed:', err);
+      alert(`Connection failed: ${err.message}`);
+    }
+  };
+
   // Order Form Component
   const OrderForm = ({ order, onSubmit, onCancel, title }) => {
     const [formData, setFormData] = useState({
@@ -250,12 +329,21 @@ const Orders = () => {
       subtotal: order?.subtotal || '0.00',
       shipping_cost: order?.shipping_cost || '0.00',
       total: order?.total || '0.00',
-      status: order?.status || 'pending'
+      status: order?.status || 'pending',
+      items: order?.items || []
     });
+
+    const [orderItems, setOrderItems] = useState(order?.items || [
+      { product_name: '', quantity: 1, price: '0.00', total: '0.00' }
+    ]);
 
     const handleSubmit = (e) => {
       e.preventDefault();
-      onSubmit(formData);
+      const orderData = {
+        ...formData,
+        items: orderItems
+      };
+      onSubmit(orderData);
     };
 
     const handleChange = (e) => {
@@ -263,7 +351,6 @@ const Orders = () => {
       setFormData(prev => {
         const updated = { ...prev, [name]: value };
         
-        // Auto-calculate total when subtotal or shipping cost changes
         if (name === 'subtotal' || name === 'shipping_cost') {
           const subtotal = parseFloat(name === 'subtotal' ? value : updated.subtotal) || 0;
           const shipping = parseFloat(name === 'shipping_cost' ? value : updated.shipping_cost) || 0;
@@ -271,6 +358,41 @@ const Orders = () => {
         }
         
         return updated;
+      });
+    };
+
+    const addOrderItem = () => {
+      setOrderItems([...orderItems, { product_name: '', quantity: 1, price: '0.00', total: '0.00' }]);
+    };
+
+    const removeOrderItem = (index) => {
+      if (orderItems.length > 1) {
+        setOrderItems(orderItems.filter((_, i) => i !== index));
+      }
+    };
+
+    const updateOrderItem = (index, field, value) => {
+      const updatedItems = [...orderItems];
+      updatedItems[index][field] = value;
+      
+      // Auto-calculate item total
+      if (field === 'quantity' || field === 'price') {
+        const quantity = parseFloat(updatedItems[index].quantity) || 0;
+        const price = parseFloat(updatedItems[index].price) || 0;
+        updatedItems[index].total = (quantity * price).toFixed(2);
+      }
+      
+      setOrderItems(updatedItems);
+      
+      // Auto-calculate subtotal
+      const subtotal = updatedItems.reduce((sum, item) => sum + parseFloat(item.total || 0), 0);
+      setFormData(prev => {
+        const shipping = parseFloat(prev.shipping_cost) || 0;
+        return {
+          ...prev,
+          subtotal: subtotal.toFixed(2),
+          total: (subtotal + shipping).toFixed(2)
+        };
       });
     };
 
@@ -421,8 +543,8 @@ const Orders = () => {
                   name="subtotal"
                   value={formData.subtotal}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                  readOnly
                 />
               </div>
               <div>
@@ -451,6 +573,80 @@ const Orders = () => {
               </div>
             </div>
 
+            {/* Order Items Section */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-800">Order Items</h3>
+                <button
+                  type="button"
+                  onClick={addOrderItem}
+                  className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 flex items-center gap-1"
+                >
+                  <Plus size={14} />
+                  Add Item
+                </button>
+              </div>
+
+              {orderItems.map((item, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-medium text-gray-700">Item {index + 1}</h4>
+                    {orderItems.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeOrderItem(index)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                      <input
+                        type="text"
+                        value={item.product_name}
+                        onChange={(e) => updateOrderItem(index, 'product_name', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                        placeholder="Enter product name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) => updateOrderItem(index, 'quantity', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={item.price}
+                        onChange={(e) => updateOrderItem(index, 'price', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="text-right">
+                    <span className="text-sm text-gray-600">Item Total: </span>
+                    <span className="font-semibold">${parseFloat(item.total || 0).toFixed(2)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
@@ -477,6 +673,8 @@ const Orders = () => {
   // Order Details Modal
   const OrderDetailsModal = ({ order, onClose }) => {
     if (!order) return null;
+
+    const StatusIcon = getStatusIcon(order.status);
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -518,8 +716,8 @@ const Orders = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-3">Order Status</h3>
                 <div className="space-y-3">
-                  <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${statusColors[order.status]}`}>
-                    {React.createElement(statusIcons[order.status], { size: 16, className: "mr-2" })}
+                  <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
+                    <StatusIcon size={16} className="mr-2" />
                     {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                   </div>
                   <div>
@@ -543,6 +741,30 @@ const Orders = () => {
                 {order.shipping_address}<br />
                 {order.shipping_city}, {order.shipping_province} {order.shipping_postal_code}
               </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Order Items</h3>
+              <div className="space-y-2">
+                {order.items && order.items.length > 0 ? (
+                  order.items.map((item, index) => (
+                    <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="font-medium text-gray-900">{item.product_name}</span>
+                          <span className="text-gray-600 ml-2">x{item.quantity}</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-gray-600">${parseFloat(item.price).toFixed(2)} each</div>
+                          <div className="font-semibold">${parseFloat(item.total).toFixed(2)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-gray-500 text-center py-4">No items found for this order</div>
+                )}
+              </div>
             </div>
 
             <div>
@@ -574,20 +796,19 @@ const Orders = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Orders Management</h1>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-        >
-          <Plus size={20} />
-          Create Order
-        </button>
+       
       </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
+          <br />
+          <small>Check the browser console for more details.</small>
         </div>
       )}
+
+
+      
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -672,7 +893,7 @@ const Orders = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredOrders.map((order) => {
-                const StatusIcon = statusIcons[order.status];
+                const StatusIcon = getStatusIcon(order.status);
                 return (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -691,7 +912,7 @@ const Orders = () => {
                       ${parseFloat(order.total).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[order.status]}`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
                         <StatusIcon size={14} className="mr-1" />
                         {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                       </span>
@@ -707,12 +928,12 @@ const Orders = () => {
                         >
                           <Eye size={16} />
                         </button>
-                        <button
+                        {/* <button
                           onClick={() => setEditingOrder(order)}
                           className="text-green-600 hover:text-green-900"
                         >
                           <Edit size={16} />
-                        </button>
+                        </button> */}
                         <button
                           onClick={() => deleteOrder(order.id)}
                           className="text-red-600 hover:text-red-900"
