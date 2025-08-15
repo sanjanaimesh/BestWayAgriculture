@@ -43,7 +43,8 @@ app.get('/', (req, res) => {
       api: '/api',
       health: '/api/health',
       products: '/api/products',
-      orders: '/api/orders'
+      orders: '/api/orders',
+      users: 'api/users' 
     }
   });
 });

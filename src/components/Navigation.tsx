@@ -1,15 +1,15 @@
 import React from 'react';
 import { Sprout, ShoppingCart, Menu, X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import Navigation from '../components/Nav';
+import Navigation from './Nav';
 
-interface HeaderProps {
+interface Nav {
   activeSection: string;
   setActiveSection: (section: string) => void;
   setIsCartOpen: (isOpen: boolean) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ activeSection, setActiveSection, setIsCartOpen }) => {
+const Nav: React.FC<Nav> = ({ activeSection, setActiveSection, setIsCartOpen }) => {
   const { cartItems } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
@@ -72,4 +72,4 @@ const Header: React.FC<HeaderProps> = ({ activeSection, setActiveSection, setIsC
   );
 };
 
-export default Header;
+export default Nav;
