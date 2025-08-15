@@ -28,7 +28,7 @@ const AdminLogin = (): JSX.Element => {
     if (!success) {
       setError('Invalid credentials');
     }
-    // The role check and navigation will now be handled by the useEffect
+    
   };
 
   return (

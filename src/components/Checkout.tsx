@@ -591,22 +591,22 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
                       <h4 className="font-medium text-sm">{item.name}</h4>
                       <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                     </div>
-                    <span className="font-medium">LKR {(item.price * item.quantity).toLocaleString()}</span>
+                    <span className="font-medium">Rs {(item.price * item.quantity).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
               <div className="border-t pt-4">
                 <div className="flex justify-between items-center mb-2">
                   <span>Subtotal:</span>
-                  <span>LKR {getCartTotal().toLocaleString()}</span>
+                  <span>Rs {getCartTotal().toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center mb-2">
                   <span>Shipping:</span>
-                  <span>LKR 500</span>
+                  <span>Rs 500</span>
                 </div>
                 <div className="flex justify-between items-center font-bold text-lg border-t pt-2">
                   <span>Total:</span>
-                  <span>LKR {(getCartTotal() + 500).toLocaleString()}</span>
+                  <span>Rs {(getCartTotal() + 500).toLocaleString()}</span>
                 </div>
               </div>
             </div>

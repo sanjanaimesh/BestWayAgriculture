@@ -781,7 +781,7 @@ const Orders = () => {
                 <div className="border-t pt-2">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold">Total:</span>
-                    <span className="text-lg font-bold text-green-600">${parseFloat(order.total).toFixed(2)}</span>
+                    <span className="text-lg font-bold text-green-600">Rs{parseFloat(order.total).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -844,7 +844,7 @@ const Orders = () => {
             <Package size={24} className="text-purple-600" />
             <div>
               <div className="text-sm text-purple-600 font-medium">Revenue</div>
-              <div className="text-2xl font-bold text-purple-800">${stats.totalRevenue.toFixed(2)}</div>
+              <div className="text-2xl font-bold text-purple-800">Rs{stats.totalRevenue.toFixed(2)}</div>
             </div>
           </div>
         </div>
@@ -909,7 +909,7 @@ const Orders = () => {
                       {new Date(order.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      ${parseFloat(order.total).toFixed(2)}
+                      Rs{parseFloat(order.total).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>

@@ -115,12 +115,12 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm">
                     <span>Items ({cartItems.reduce((sum, item) => sum + item.quantity, 0)}):</span>
-                    <span>LKR {getCartTotal().toLocaleString()}</span>
+                    <span>Rs {getCartTotal().toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center border-t pt-2">
                     <span className="text-base sm:text-lg font-semibold">Total:</span>
                     <span className="text-xl sm:text-2xl font-bold text-green-600">
-                      LKR {getCartTotal().toLocaleString()}
+                      Rs {getCartTotal().toLocaleString()}
                     </span>
                   </div>
                 </div>

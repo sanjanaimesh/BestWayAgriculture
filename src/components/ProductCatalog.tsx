@@ -20,7 +20,7 @@ const ProductCatalog: React.FC = () => {
         setError(null);
 
         const response = await axios.get('http://localhost:4000/products');
-        setProducts(response.data.data); // Ensure your backend sends data under `data` key
+        setProducts(response.data.data); 
       } catch (err) {
         console.error('Error fetching seeds:', err);
         setError('Failed to load seeds. Please try again later.');
@@ -40,7 +40,7 @@ const ProductCatalog: React.FC = () => {
     addToCart(product);
     setAddedToCartId(product.id);
 
-    // Reset the success state after 2 seconds
+    
     setTimeout(() => {
       setAddedToCartId(null);
     }, 2000);

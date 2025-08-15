@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUserRole('admin');
       return true;
     }
-    // Check for user credentials (you can add more user accounts here)
+    
     else if (username === 'user' && password === 'userpass') {
       setIsAuthenticated(true);
       setUserRole('user');
