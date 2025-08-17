@@ -36,19 +36,25 @@ class UserController {
     }
   }
 
-  // User login
+  // User login - FIXED VERSION
   static async login(req, res) {
     try {
-      const { identifier, password } = req.body;
+      // Accept both 'username' and 'identifier' for backward compatibility
+      const { username, identifier, password } = req.body;
+      
+      // Use username if provided, otherwise use identifier
+      const loginIdentifier = username || identifier;
 
-      if (!identifier?.trim() || !password?.trim()) {
+      if (!loginIdentifier?.trim() || !password?.trim()) {
         return res.status(400).json({
           success: false,
-          message: 'Username/email and password are required'
+          message: 'Username and password are required'
         });
       }
 
-      const user = await User.authenticate(identifier.trim(), password.trim());
+      console.log('Login attempt for:', loginIdentifier.trim()); // Debug log
+
+      const user = await User.authenticate(loginIdentifier.trim(), password.trim());
 
       res.json({
         success: true,

@@ -28,6 +28,8 @@ router.get('/stats', UserController.getUserStats);
 router.delete('/:id', UserController.deactivateUser);
 router.put('/restore/:id', UserController.restoreUser);
 
+
+
 // Route to initialize database table
 router.post('/initialize', async (req, res) => {
   try {
