@@ -345,7 +345,7 @@ class User {
   static async softDelete(id) {
     try {
       const [result] = await pool.execute(
-        'UPDATE users SET isActive = false, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND isActive = true',
+        'DELETE FROM users WHERE id = ?',
         [id]
       );
 
