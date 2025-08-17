@@ -3,12 +3,12 @@ const router = express.Router();
 
 const productRoutes = require('./products');
 const orderRoutes = require('./orders');
-const userRoutes = require('./users'); // Add this line
+const userRoutes = require('./users'); 
 
 // API routes
 router.use('/products', productRoutes);
 router.use('/orders', orderRoutes);
-router.use('/users', userRoutes); // Add this line
+router.use('/users', userRoutes); 
 
 // Health check route
 router.get('/health', (req, res) => {

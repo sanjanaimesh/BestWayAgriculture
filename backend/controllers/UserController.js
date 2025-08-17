@@ -61,7 +61,7 @@ class UserController {
         message: 'Login successful',
         data: {
           user: user,
-          token: null // You can implement JWT token here if needed
+          token: null 
         }
       });
     } catch (error) {

@@ -737,13 +737,13 @@ const Users = () => {
                         >
                           <Edit size={16} />
                         </button>
-                        <button
+                        {/* <button
                           onClick={() => toggleUserStatus(user)}
                           className={`${user.isActive ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}`}
                           title={user.isActive ? 'Deactivate User' : 'Activate User'}
                         >
                           {user.isActive ? <ShieldOff size={16} /> : <Shield size={16} />}
-                        </button>
+                        </button> */}
                         <button
                           onClick={() => handleDelete(user.id)}
                           className="text-red-600 hover:text-red-900"

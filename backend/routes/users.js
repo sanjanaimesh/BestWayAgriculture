@@ -20,6 +20,69 @@ router.get('/check-email/:email', UserController.checkEmail);
 // User profile routes
 router.get('/profile/:id', UserController.getProfile);
 router.put('/profile/:id', UserController.updateProfile);
+
+// PUT /api/users/:id - Update user route
+router.put('update/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Validate ID parameter
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user ID provided',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Call the update function
+    const updatedUser = await User.updateUser(parseInt(id), updateData);
+
+    // Return success response
+    res.status(200).json({
+      success: true,
+      message: 'User updated successfully',
+      data: updatedUser,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Update user error:', error);
+
+    // Handle specific error types
+    if (error.message === 'User not found or inactive') {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (error.message.includes('already exists') || error.message.includes('Duplicate')) {
+      return res.status(409).json({
+        success: false,
+        message: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (error.message.includes('Invalid') || error.message.includes('required') || error.message.includes('format')) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Generic error response
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
 router.put('/password/:id', UserController.updatePassword);
 
 // Admin routes (in a real application, these would require admin authentication middleware)
