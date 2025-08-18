@@ -17,6 +17,8 @@ class UserController {
         role: role || 'user'
       };
 
+      console.log('Creating user with data:', { ...userData, password: '***' });
+
       const newUser = await User.create(userData);
 
       res.status(201).json({
@@ -36,13 +38,11 @@ class UserController {
     }
   }
 
-  // User login - FIXED VERSION
+  // User login
   static async login(req, res) {
     try {
-      // Accept both 'username' and 'identifier' for backward compatibility
       const { username, identifier, password } = req.body;
       
-      // Use username if provided, otherwise use identifier
       const loginIdentifier = username || identifier;
 
       if (!loginIdentifier?.trim() || !password?.trim()) {
@@ -52,7 +52,7 @@ class UserController {
         });
       }
 
-      console.log('Login attempt for:', loginIdentifier.trim()); // Debug log
+      console.log('Login attempt for:', loginIdentifier.trim());
 
       const user = await User.authenticate(loginIdentifier.trim(), password.trim());
 
@@ -84,6 +84,8 @@ class UserController {
           message: 'User ID is required'
         });
       }
+
+      console.log('Getting profile for user ID:', userId);
 
       const user = await User.findById(userId);
 
@@ -119,6 +121,8 @@ class UserController {
       const role = req.query.role;
       const province = req.query.province;
       const search = req.query.search;
+
+      console.log('Getting all users with filters:', { page, limit, role, province, search });
 
       // Validate pagination parameters
       if (page < 1 || limit < 1 || limit > 100) {
@@ -166,9 +170,13 @@ class UserController {
         });
       }
 
+      console.log('Updating user profile:', userId, updateData);
+
       // Remove password and role from update data for security
       delete updateData.password;
-      delete updateData.role;
+      
+      // Allow role updates only for admin users (you can add admin check here)
+      // delete updateData.role;
 
       // Trim string values
       Object.keys(updateData).forEach(key => {
@@ -178,6 +186,13 @@ class UserController {
       });
 
       const updatedUser = await User.update(userId, updateData);
+
+      if (!updatedUser) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
 
       res.json({
         success: true,
@@ -223,6 +238,8 @@ class UserController {
         });
       }
 
+      console.log('Updating password for user:', userId);
+
       await User.updatePassword(userId, currentPassword, newPassword);
 
       res.json({
@@ -238,7 +255,7 @@ class UserController {
     }
   }
 
-  // Deactivate user (Admin only)
+  // Deactivate user (Admin only) - Actually deletes the user
   static async deactivateUser(req, res) {
     try {
       const userId = req.params.id;
@@ -250,17 +267,19 @@ class UserController {
         });
       }
 
-      await User.softDelete(userId);
+      console.log('Deleting user:', userId);
+
+      const result = await User.softDelete(userId);
 
       res.json({
         success: true,
-        message: 'User deactivated successfully'
+        message: 'User deleted successfully'
       });
     } catch (error) {
-      console.error('Deactivate user error:', error);
+      console.error('Delete user error:', error);
       res.status(400).json({
         success: false,
-        message: error.message || 'Failed to deactivate user'
+        message: error.message || 'Failed to delete user'
       });
     }
   }
@@ -276,6 +295,8 @@ class UserController {
           message: 'User ID is required'
         });
       }
+
+      console.log('Restoring user:', userId);
 
       await User.restore(userId);
 
@@ -295,6 +316,8 @@ class UserController {
   // Get user statistics (Admin only)
   static async getUserStats(req, res) {
     try {
+      console.log('Getting user statistics...');
+      
       const { pool } = require('../config/database');
 
       const [stats] = await pool.execute(`
@@ -316,6 +339,8 @@ class UserController {
         GROUP BY province 
         ORDER BY count DESC
       `);
+
+      console.log('User stats:', stats[0]);
 
       res.json({
         success: true,

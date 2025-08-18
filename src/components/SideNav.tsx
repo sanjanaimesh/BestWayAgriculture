@@ -7,6 +7,7 @@ const SideNav = ({ activeItem, onNavClick }) => {
     { label: 'Orders', icon: <ShoppingCart size={20} />, path: '/admin/orders' },
     { label: 'Messages', icon: <MessageCircle size={20} />, path: '/admin/messages' },
     { label: 'Users', icon: <Users size={20} />, path: '/admin/users' },
+    { label: 'Agent', icon: <Users size={20} />, path: '/admin/agent' },
   ];
 
   return (
