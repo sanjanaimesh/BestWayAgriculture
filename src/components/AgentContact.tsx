@@ -168,10 +168,10 @@ const AgentContact = () => {
                 />
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{agent.name}</h3>
                 <p className="text-green-600 font-medium text-sm sm:text-base">{agent.specialty}</p>
-                <div className="flex items-center justify-center mt-2">
+                {/* <div className="flex items-center justify-center mt-2">
                   <Star className="h-5 w-5 text-yellow-400 fill-current" />
                   <span className="ml-1 text-sm text-gray-600">{agent.rating} • {agent.experience}</span>
-                </div>
+                </div> */}
               </div>
               <p className="text-gray-600 text-sm mb-4">{agent.bio}</p>
               <div className="space-y-2">
