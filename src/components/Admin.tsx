@@ -5,6 +5,7 @@ import Products from '../components/Admin/Product';
 import Orders from '../components/Admin/Orders';
 import Users from '../components/Admin/UserManagment';
 import Messages from '../components/Admin/Messages';
+import Agent from './Admin/Agent';
 
 const AdminPanel = () => {
   const [activeItem, setActiveItem] = useState('/admin/dashboard');
@@ -32,6 +33,8 @@ const AdminPanel = () => {
         return <Messages />;
       case '/admin/settings':
         return <Settings />;
+       case '/admin/agent':
+        return <Agent />;
       default:
         return <Dashboard />;
     }

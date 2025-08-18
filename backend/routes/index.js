@@ -4,11 +4,13 @@ const router = express.Router();
 const productRoutes = require('./products');
 const orderRoutes = require('./orders');
 const userRoutes = require('./users'); 
+const contactRoutes = require('./contact'); 
 
 // API routes
 router.use('/products', productRoutes);
 router.use('/orders', orderRoutes);
 router.use('/users', userRoutes); 
+router.use('/contacts', contactRoutes);
 
 // Health check route
 router.get('/health', (req, res) => {
@@ -30,7 +32,8 @@ router.get('/info', (req, res) => {
     endpoints: {
       products: '/api/products',
       orders: '/api/orders',
-      users: '/api/users', // Add this line
+      users: '/api/users',
+      contacts: '/api/contacts', // Add this line
       health: '/api/health'
     },
     timestamp: new Date().toISOString()

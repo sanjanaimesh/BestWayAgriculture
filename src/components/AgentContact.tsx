@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Phone, Mail, MessageCircle, Star, Calendar } from 'lucide-react';
+import { Phone, Mail, MessageCircle, Star, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
 
-const AgentContact: React.FC = () => {
-  const [selectedAgent, setSelectedAgent] = useState<number | null>(null);
+const AgentContact = () => {
+  const [selectedAgent, setSelectedAgent] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', null
   const [contactForm, setContactForm] = useState({
     name: '',
     email: '',
@@ -11,10 +13,12 @@ const AgentContact: React.FC = () => {
     cropType: ''
   });
 
+  const API_BASE_URL = 'http://localhost:4000';
+
   const agents = [
     {
       id: 1,
-      name: 'Dr. aneee Johnson',
+      name: 'Dr. Sarah Johnson',
       specialty: 'Vegetable Crops',
       experience: '15 years',
       rating: 4.9,
@@ -36,7 +40,7 @@ const AgentContact: React.FC = () => {
     },
     {
       id: 3,
-      name: 'Dr. sanajna Rodriguez',
+      name: 'Dr. Emily Rodriguez',
       specialty: 'Crop Disease Management',
       experience: '18 years',
       rating: 4.9,
@@ -47,22 +51,64 @@ const AgentContact: React.FC = () => {
     }
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Form submitted:', contactForm);
-    // Reset form
-    setContactForm({
-      name: '',
-      email: '',
-      phone: '',
-      message: '',
-      cropType: ''
-    });
-    alert('Thank you! An expert will contact you within 24 hours.');
+    setLoading(true);
+    setSubmitStatus(null);
+
+    try {
+      // Prepare data for API
+      const selectedAgentData = selectedAgent ? agents.find(a => a.id === selectedAgent) : null;
+      
+      const submitData = {
+        name: contactForm.name,
+        email: contactForm.email,
+        phone: contactForm.phone || null,
+        cropType: contactForm.cropType || null,
+        message: contactForm.message,
+        selectedAgentId: selectedAgentData?.id || null,
+        selectedAgentName: selectedAgentData?.name || null
+      };
+
+      const response = await fetch(`${API_BASE_URL}/api/contacts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submitData)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setSubmitStatus('success');
+        // Reset form
+        setContactForm({
+          name: '',
+          email: '',
+          phone: '',
+          message: '',
+          cropType: ''
+        });
+        setSelectedAgent(null);
+        
+        // Auto-hide success message after 5 seconds
+        setTimeout(() => {
+          setSubmitStatus(null);
+        }, 5000);
+      } else {
+        setSubmitStatus('error');
+        console.error('API Error:', result.message);
+      }
+    } catch (error) {
+      console.error('Network Error:', error);
+      setSubmitStatus('error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (e) => {
     setContactForm({
       ...contactForm,
       [e.target.name]: e.target.value
@@ -80,6 +126,35 @@ const AgentContact: React.FC = () => {
             Get personalized guidance from certified agricultural specialists to maximize your crop success
           </p>
         </div>
+
+        {/* Success/Error Messages */}
+        {submitStatus === 'success' && (
+          <div className="max-w-2xl mx-auto mb-8">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center">
+              <CheckCircle className="h-6 w-6 text-green-600 mr-3" />
+              <div>
+                <h3 className="text-green-800 font-semibold">Request Submitted Successfully!</h3>
+                <p className="text-green-700 text-sm mt-1">
+                  Thank you for contacting us. An expert will reach out to you within 24 hours.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {submitStatus === 'error' && (
+          <div className="max-w-2xl mx-auto mb-8">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center">
+              <AlertCircle className="h-6 w-6 text-red-600 mr-3" />
+              <div>
+                <h3 className="text-red-800 font-semibold">Submission Failed</h3>
+                <p className="text-red-700 text-sm mt-1">
+                  Sorry, there was an error submitting your request. Please try again.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Agent Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-12">
@@ -111,10 +186,14 @@ const AgentContact: React.FC = () => {
               </div>
               <button
                 onClick={() => setSelectedAgent(agent.id)}
-                className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center text-base"
+                className={`w-full mt-4 font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center text-base ${
+                  selectedAgent === agent.id
+                    ? 'bg-green-700 text-white'
+                    : 'bg-green-600 hover:bg-green-700 text-white'
+                }`}
               >
                 <MessageCircle className="h-5 w-5 mr-2" />
-                Contact Expert
+                {selectedAgent === agent.id ? 'Selected' : 'Contact Expert'}
               </button>
             </div>
           ))}
@@ -153,17 +232,10 @@ const AgentContact: React.FC = () => {
             )}
           </div>
           <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
-            {selectedAgent && (
-              <input
-                type="hidden"
-                name="selectedExpert"
-                value={agents.find(a => a.id === selectedAgent)?.name || ''}
-              />
-            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
+                  Full Name *
                 </label>
                 <input
                   type="text"
@@ -171,12 +243,13 @@ const AgentContact: React.FC = () => {
                   value={contactForm.name}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base"
+                  disabled={loading}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
+                  Email Address *
                 </label>
                 <input
                   type="email"
@@ -184,7 +257,8 @@ const AgentContact: React.FC = () => {
                   value={contactForm.email}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base"
+                  disabled={loading}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
@@ -196,7 +270,8 @@ const AgentContact: React.FC = () => {
                   name="phone"
                   value={contactForm.phone}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base"
+                  disabled={loading}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
@@ -207,7 +282,8 @@ const AgentContact: React.FC = () => {
                   name="cropType"
                   value={contactForm.cropType}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base"
+                  disabled={loading}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="">Select crop type</option>
                   <option value="vegetables">Vegetables</option>
@@ -220,7 +296,7 @@ const AgentContact: React.FC = () => {
             </div>
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Message
+                Message *
               </label>
               <textarea
                 name="message"
@@ -228,19 +304,30 @@ const AgentContact: React.FC = () => {
                 onChange={handleInputChange}
                 rows={4}
                 required
+                disabled={loading}
                 placeholder={selectedAgent 
                   ? `Tell ${agents.find(a => a.id === selectedAgent)?.name} about your farming needs, challenges, or questions...`
                   : "Tell us about your farming needs, challenges, or questions..."
                 }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors flex items-center justify-center text-base"
+              disabled={loading}
+              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors flex items-center justify-center text-base"
             >
-              <Calendar className="h-5 w-5 mr-2" />
-              {selectedAgent ? 'Contact Selected Expert' : 'Request Consultation'}
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Calendar className="h-5 w-5 mr-2" />
+                  {selectedAgent ? 'Contact Selected Expert' : 'Request Consultation'}
+                </>
+              )}
             </button>
           </form>
         </div>
