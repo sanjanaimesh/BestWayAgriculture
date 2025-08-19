@@ -2,7 +2,7 @@ import React from 'react';
 import { BarChart3, TrendingUp, Users, Package, ShoppingCart, DollarSign } from 'lucide-react';
 
 const Dashboard = () => {
-  // Mock data - replace with real data from your API
+  
   const stats = {
     totalRevenue: 24500,
     totalOrders: 1234,

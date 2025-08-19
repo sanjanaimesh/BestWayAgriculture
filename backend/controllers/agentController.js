@@ -1,7 +1,7 @@
 const Agent = require('../models/Agent');
 
 class AgentController {
-  // GET /api/agents - Get all agents with optional filters
+  // GET /api/agents 
   static async getAllAgents(req, res) {
     try {
       const filters = {};
@@ -46,7 +46,7 @@ class AgentController {
     }
   }
 
-  // GET /api/agents/:id - Get single agent by ID
+  // GET /api/agents/:id 
   static async getAgentById(req, res) {
     try {
       const { id } = req.params;
@@ -85,63 +85,65 @@ class AgentController {
   // POST /api/agents - Create new agent
 static async createAgent(req, res) {
   try {
+    
     const agentData = {
       name: req.body.name,
       specialty: req.body.specialty,
       experience: req.body.experience,
+      
       phone: req.body.phone,
       email: req.body.email,
+      image_url: req.body.image || req.body.image_url || null,
       bio: req.body.bio,
-      is_active: req.body.is_active !== undefined ? req.body.is_active : true
+      is_active: req.body.is_active !== undefined ? req.body.is_active : true,
     };
 
-    // Add image only if provided
-    if (req.body.image || req.body.image_url) {
-      agentData.image_url = req.body.image || req.body.image_url;
-    }
-
-    const agent = new Agent(agentData);
     
-    // Validate data
+    const agent = new Agent(agentData);
+
+    
     const validationErrors = agent.validateData();
     if (validationErrors.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'Validation failed',
-        errors: validationErrors
+        message: "Validation failed",
+        errors: validationErrors,
       });
     }
 
-    // Save agent
+    
     const savedAgent = await agent.save();
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      message: 'Agent created successfully',
-      data: savedAgent.toJSON()
+      message: "Agent created successfully",
+      data: savedAgent.toJSON(),
     });
+
   } catch (error) {
-    console.error('Error in createAgent:', error);
-    
-    // Handle duplicate email error
-    if (error.message.includes('email already exists')) {
+    console.error("Error in createAgent:", error);
+
+    // Handle duplicate email conflict
+    if (error.message && error.message.includes("email already exists")) {
       return res.status(409).json({
         success: false,
-        message: 'An agent with this email already exists',
-        error: error.message
+        message: "An agent with this email already exists",
+        error: error.message,
       });
     }
 
-    res.status(500).json({
+    // Generic server error
+    return res.status(500).json({
       success: false,
-      message: 'Failed to create agent',
-      error: error.message
+      message: "Failed to create agent",
+      error: error.message || "Unknown error",
     });
   }
 }
 
 
-  // PUT /api/agents/:id - Update existing agent
+
+  // PUT /api/agents/:id
   static async updateAgent(req, res) {
     try {
       const { id } = req.params;
@@ -153,7 +155,7 @@ static async createAgent(req, res) {
         });
       }
 
-      // Check if agent exists
+      
       const existingAgent = await Agent.findById(parseInt(id));
       if (!existingAgent) {
         return res.status(404).json({
@@ -199,7 +201,7 @@ static async createAgent(req, res) {
     } catch (error) {
       console.error('Error in updateAgent:', error);
       
-      // Handle duplicate email error
+      
       if (error.message.includes('email already exists')) {
         return res.status(409).json({
           success: false,
@@ -216,11 +218,11 @@ static async createAgent(req, res) {
     }
   }
 
-  // DELETE /api/agents/:id - Soft delete agent
+  // DELETE /api/agents/:id 
   static async deleteAgent(req, res) {
     try {
       const { id } = req.params;
-      const { permanent } = req.query; // ?permanent=true for hard delete
+      const { permanent } = req.query; 
       
       if (!id || isNaN(id)) {
         return res.status(400).json({
@@ -241,14 +243,14 @@ static async createAgent(req, res) {
       }
 
       if (permanent === 'true') {
-        // Hard delete (permanent)
+        
         await Agent.hardDelete(agentId);
         res.status(200).json({
           success: true,
           message: 'Agent permanently deleted'
         });
       } else {
-        // Soft delete (set is_active to false)
+        
         await Agent.softDelete(agentId);
         res.status(200).json({
           success: true,
@@ -265,7 +267,7 @@ static async createAgent(req, res) {
     }
   }
 
-  // POST /api/agents/:id/restore - Restore soft deleted agent
+  // POST /api/agents/:id/restore
   static async restoreAgent(req, res) {
     try {
       const { id } = req.params;
@@ -295,7 +297,7 @@ static async createAgent(req, res) {
     }
   }
 
-  // GET /api/agents/statistics - Get agent statistics
+  // GET /api/agents/statistics
   static async getStatistics(req, res) {
     try {
       const statistics = await Agent.getStatistics();
@@ -315,7 +317,7 @@ static async createAgent(req, res) {
     }
   }
 
-  // GET /api/agents/specialties - Get all unique specialties
+  // GET /api/agents/specialties
   static async getSpecialties(req, res) {
     try {
       const specialties = await Agent.getSpecialties();
@@ -335,7 +337,7 @@ static async createAgent(req, res) {
     }
   }
 
-  // PATCH /api/agents/:id/toggle - Toggle agent active status
+  // PATCH /api/agents/:id/toggle
   static async toggleAgentStatus(req, res) {
     try {
       const { id } = req.params;

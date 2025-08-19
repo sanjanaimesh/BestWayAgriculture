@@ -1,4 +1,4 @@
-const { pool } = require('../config/database'); // Import pool, not db
+const { pool } = require('../config/database'); 
 
 const Contact = {
   // Create new contact

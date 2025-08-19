@@ -55,7 +55,7 @@ class OrderController {
     }
   }
 
-  // Update entire order - ADDED THIS METHOD
+  // Update entire order
   static async updateOrder(req, res) {
     try {
       const orderId = parseInt(req.params.id);
@@ -168,7 +168,7 @@ class OrderController {
     }
   }
 
-  // Update order status - FIXED THIS METHOD
+  // Update order status
   static async updateOrderStatus(req, res) {
     try {
       const orderId = parseInt(req.params.id);
@@ -207,7 +207,7 @@ class OrderController {
         items_count: existingOrder.items ? existingOrder.items.length : 0
       });
 
-      // Use the instance method to update status
+      
       const updatedOrder = await existingOrder.updateStatus(status.toLowerCase());
       
       return successResponse(res, "Order status updated successfully", updatedOrder);
@@ -232,7 +232,7 @@ class OrderController {
         return errorResponse(res, "Order not found", null, 404);
       }
 
-      // Check if order can be deleted (optional business logic)
+      
       if (order.status === 'shipped' || order.status === 'delivered') {
         return errorResponse(res, "Cannot delete shipped or delivered orders", null, 400);
       }

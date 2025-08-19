@@ -175,7 +175,7 @@ class Order {
           price * quantity
         ]);
 
-        // Update product stock (with stock check)
+        // Update product stock 
         const [stockResult] = await connection.execute(`
           UPDATE products 
           SET stock = stock - ? 

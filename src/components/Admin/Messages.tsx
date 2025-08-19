@@ -173,8 +173,8 @@ const Messages = () => {
       selectedAgent: contact.selectedAgentName,
       agentSpecialty: contact.selectedAgentName ? 'Agricultural Expert' : null,
       cropType: contact.cropType,
-      replies: [], // You might want to implement a replies system later
-      backendId: contact.id // Keep track of backend ID
+      replies: [], 
+      backendId: contact.id 
     };
   };
 

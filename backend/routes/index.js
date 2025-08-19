@@ -35,7 +35,7 @@ router.get('/info', (req, res) => {
       orders: '/api/orders',
       users: '/api/users',
       contacts: '/api/contacts',
-      agents: '/api/agents', // Add this line
+      agents: '/api/agents', 
       health: '/api/health'
     },
     timestamp: new Date().toISOString()

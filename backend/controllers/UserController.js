@@ -172,13 +172,9 @@ class UserController {
 
       console.log('Updating user profile:', userId, updateData);
 
-      // Remove password and role from update data for security
       delete updateData.password;
-      
-      // Allow role updates only for admin users (you can add admin check here)
-      // delete updateData.role;
 
-      // Trim string values
+      
       Object.keys(updateData).forEach(key => {
         if (typeof updateData[key] === 'string') {
           updateData[key] = updateData[key].trim();
@@ -255,7 +251,7 @@ class UserController {
     }
   }
 
-  // Deactivate user (Admin only) - Actually deletes the user
+  // Deactivate user 
   static async deactivateUser(req, res) {
     try {
       const userId = req.params.id;
@@ -284,7 +280,7 @@ class UserController {
     }
   }
 
-  // Restore user (Admin only)
+  // Restore user 
   static async restoreUser(req, res) {
     try {
       const userId = req.params.id;
@@ -313,7 +309,7 @@ class UserController {
     }
   }
 
-  // Get user statistics (Admin only)
+  // Get user statistics 
   static async getUserStats(req, res) {
     try {
       console.log('Getting user statistics...');

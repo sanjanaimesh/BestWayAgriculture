@@ -16,14 +16,13 @@ const AdminLogin = (): JSX.Element => {
       navigate('/admin');
     } else if (userRole && userRole !== 'admin') {
       setError('Access denied. Admin credentials required.');
-      // Logout non-admin users who try to access admin page
       logout();
     }
   }, [userRole, navigate, logout]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError(''); // Clear any previous errors
+    setError(''); 
     const success = login(username, password);
     
     if (!success) {

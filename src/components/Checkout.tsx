@@ -91,10 +91,10 @@ const PaymentForm: React.FC<{
         orderNumber: orderNum,
         customerInfo: shippingInfo,
         items: cartItems,
-        subtotal: amount - 500, // Remove shipping from subtotal
+        subtotal: amount - 500, 
         shipping: 500,
         total: amount,
-        status: 'processing', // Use 'processing' instead of 'confirmed'
+        status: 'processing', 
         paymentMethodId: paymentMethod.id,
         paymentStatus: 'completed'
       };

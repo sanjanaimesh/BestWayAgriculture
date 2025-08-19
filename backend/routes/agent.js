@@ -70,7 +70,6 @@ const logRequest = (req, res, next) => {
 // Apply logging middleware to all routes
 router.use(logRequest);
 
-// Routes
 
 // GET /api/agents/statistics - Get agent statistics (must be before /:id route)
 router.get('/statistics', AgentController.getStatistics);
@@ -92,8 +91,7 @@ router.put('/:id', validateAgentId, validateAgentData, AgentController.updateAge
 
 // PATCH /api/agents/:id - Partial update of agent (for fields that don't require full validation)
 router.patch('/:id', validateAgentId, (req, res, next) => {
-  // Skip full validation for PATCH requests
-  // Only validate provided fields
+  
   const errors = [];
 
   if (req.body.name !== undefined && (!req.body.name || req.body.name.trim().length < 2)) {
@@ -128,7 +126,7 @@ router.patch('/:id/toggle', validateAgentId, AgentController.toggleAgentStatus);
 // POST /api/agents/:id/restore - Restore soft deleted agent
 router.post('/:id/restore', validateAgentId, AgentController.restoreAgent);
 
-// DELETE /api/agents/:id - Delete agent (soft delete by default, use ?permanent=true for hard delete)
+// DELETE /api/agents/:id - Delete agent 
 router.delete('/:id', validateAgentId, AgentController.deleteAgent);
 
 // Health check route specific to agents

@@ -179,7 +179,7 @@ const isValidEmail = (email) => {
  * Sanitize input data
  */
 const sanitizeInput = (req, res, next) => {
-  // Remove any script tags or potentially harmful content
+  
   const sanitize = (obj) => {
     for (let key in obj) {
       if (typeof obj[key] === 'string') {

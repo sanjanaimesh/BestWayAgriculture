@@ -1,10 +1,8 @@
 const User = require('../models/User');
 
-// Basic authentication middleware (you can enhance this with JWT)
+// Basic authentication middleware 
 const authenticateUser = async (req, res, next) => {
   try {
-    // For demo purposes, we'll use basic authentication
-    // In production, you should implement JWT or session-based auth
     const userId = req.headers['user-id'];
     
     if (!userId) {

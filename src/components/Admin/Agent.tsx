@@ -190,7 +190,7 @@ const Agent = () => {
         );
         await fetchAgents();
         await fetchStatistics();
-        await fetchSpecialties(); // Refresh specialties after adding agent
+        await fetchSpecialties(); 
         handleCancel();
       } else {
         showNotification(result.message || 'Failed to save agent', 'error');
@@ -487,7 +487,7 @@ const Agent = () => {
                 />
               </div>
 
-              {/* <div>
+              { <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Rating
                 </label>
@@ -501,7 +501,7 @@ const Agent = () => {
                   step="0.1"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
-              </div> */}
+              </div>}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -642,7 +642,7 @@ const Agent = () => {
               <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                  <span> {agent.experience} experience</span>
+                  <span>{agent.rating} {agent.experience} experience</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Phone className="h-4 w-4" />
@@ -677,7 +677,7 @@ const Agent = () => {
         )}
 
         {/* Stats Summary */}
-        {statistics && (
+        {/* {statistics && (
           <div className="mt-8 bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Summary</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -699,7 +699,7 @@ const Agent = () => {
               </div>
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

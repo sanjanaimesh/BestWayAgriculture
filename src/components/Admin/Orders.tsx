@@ -60,7 +60,6 @@ const Orders = () => {
       } else if (data && Array.isArray(data.data)) {
         ordersArray = data.data;
       } else if (data && typeof data === 'object') {
-        // If it's a single order object, wrap it in an array
         ordersArray = [data];
       }
       
@@ -256,7 +255,7 @@ const Orders = () => {
 
     const result = await response.json();
     console.log('Status update successful:', result);
-    return result.data; // Return the updated order
+    return result.data; 
     
   } catch (error) {
     console.error('Update order status error:', error);
@@ -296,7 +295,7 @@ const Orders = () => {
 
   // Helper function to get status icon safely
   const getStatusIcon = (status) => {
-    return statusIcons[status] || Package; // Default to Package icon if status not found
+    return statusIcons[status] || Package; 
   };
 
   // Test API Connection Button

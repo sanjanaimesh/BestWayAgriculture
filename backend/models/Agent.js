@@ -113,7 +113,7 @@ class Agent {
         throw new Error(`Validation failed: ${validationErrors.join(', ')}`);
       }
 
-      // Check if email already exists (only for new agents or if email changed)
+      // Check if email already exists
       if (this.email) {
         const existingAgent = await Agent.findByEmail(this.email);
         if (existingAgent && existingAgent.id !== this.id) {
@@ -164,7 +164,7 @@ class Agent {
     }
   }
 
-  // Delete agent (soft delete by setting is_active to false)
+  // Delete agent 
   static async softDelete(id) {
     try {
       if (!id) {
@@ -185,7 +185,7 @@ class Agent {
     }
   }
 
-  // Hard delete agent (permanent deletion)
+  // Hard delete agent 
   static async hardDelete(id) {
     try {
       console.log('Attempting to delete agent with ID:', id);
@@ -299,7 +299,7 @@ class Agent {
     }
 
     if (this.phone && typeof this.phone === 'string' && this.phone.trim()) {
-      // Basic phone validation - adjust regex as needed
+      // Basic phone validation
       if (!/^[\+]?[0-9\s\-\(\)]{10,}$/.test(this.phone.trim())) {
         errors.push('Please provide a valid phone number');
       }
@@ -308,7 +308,7 @@ class Agent {
     return errors;
   }
 
-  // Convert to JSON (useful for API responses)
+  // Convert to JSON 
   toJSON() {
     return {
       id: this.id,

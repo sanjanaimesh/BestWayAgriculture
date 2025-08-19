@@ -74,7 +74,7 @@ const UserLogin = (): JSX.Element => {
       return;
     }
 
-    console.log('Attempting login with:', { username, password: '***' }); // Debug log
+    console.log('Attempting login with:', { username, password: '***' }); 
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/login`, {
@@ -83,18 +83,17 @@ const UserLogin = (): JSX.Element => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: username.trim(), // Use 'username' instead of 'identifier'
+          username: username.trim(), 
           password: password
         }),
       });
 
-      console.log('Login response status:', response.status); // Debug log
-
+      console.log('Login response status:', response.status); 
       const data = await response.json();
-      console.log('Login response data:', data); // Debug log
+      console.log('Login response data:', data); 
 
       if (response.ok && data.success) {
-        // Store token and user data if provided
+        
         if (data.data?.token) {
           localStorage.setItem('token', data.data.token);
         }
@@ -113,7 +112,7 @@ const UserLogin = (): JSX.Element => {
           username.trim(), 
           password, 
           (data.data?.user?.role as 'admin' | 'user') || 'user',
-          data.data?.user // Pass the full user object
+          data.data?.user 
         );
         
         console.log('AuthProvider login result:', authSuccess);
@@ -206,7 +205,7 @@ const UserLogin = (): JSX.Element => {
       return;
     }
 
-    console.log('Attempting registration with:', { ...trimmedData, password: '***' }); // Debug log
+    console.log('Attempting registration with:', { ...trimmedData, password: '***' }); 
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/register`, {

@@ -14,7 +14,7 @@ const contactController = {
         selectedAgentName
       } = req.body;
 
-      // Validation
+      
       if (!name || !email || !message) {
         return res.status(400).json({
           success: false,
@@ -32,7 +32,7 @@ const contactController = {
         });
       }
 
-      // Phone validation (if provided)
+      // Phone validation
       if (phone && phone.length < 10) {
         return res.status(400).json({
           success: false,

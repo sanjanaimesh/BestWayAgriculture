@@ -39,10 +39,10 @@ const validateContactInput = (req, res, next) => {
   next();
 };
 
-// Rate limiting middleware (simple in-memory implementation)
+// Rate limiting middleware 
 const rateLimitMap = new Map();
-const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
-const MAX_REQUESTS = 5; // Max requests per window
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; 
+const MAX_REQUESTS = 5; 
 
 const rateLimiter = (req, res, next) => {
   const clientIP = req.ip || req.connection.remoteAddress;
