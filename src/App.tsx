@@ -14,8 +14,9 @@ import UserLogin from './components/Auth/UserLogin';
 import ProtectedRoute from './../src/components/Routes/ProtectRoutes';
 import { AuthProvider } from '../src/components/Auth/Providers/AuthProvider';
 import AdminPanel from './components/Admin';
+import UserCRUD from './components/Crud';
 
-type SectionType = 'home' | 'about' | 'products' | 'agents';
+type SectionType = 'home' | 'about' | 'products' | 'agents'| 'seeds';
 
 // Create a component to handle conditional navigation rendering
 function AppContent(): JSX.Element {
@@ -45,6 +46,8 @@ function AppContent(): JSX.Element {
           <Route path="/about" element={<AboutUs />} />
           <Route path="/products" element={<ProductCatalog />} />
           <Route path="/agents" element={<AgentContact />} />
+          <Route path="/crud" element={<UserCRUD />} />
+          <Route path="/about" element={<AboutUs />} />
           <Route path="/" element={
             <>
               <Hero setActiveSection={setActiveSection} />

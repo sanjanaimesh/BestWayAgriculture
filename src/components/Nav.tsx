@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LogIn, LogOut, User } from 'lucide-react';
 import { useAuth } from '../components/Auth/Providers/AuthProvider'; 
+
+
 
 interface NavigationProps {
   isMobile?: boolean;
@@ -13,12 +15,16 @@ const Navigation: React.FC<NavigationProps> = ({
   onMobileItemClick 
 }) => {
   const location = useLocation();
-  const { isAuthenticated, userRole, logout } = useAuth(); // Use the auth context
+ const { login, isAuthenticated, userRole, user, logout } = useAuth();
+
+  
   
   const navItems = [
+    
     { id: 'home', label: 'Home', path: '/' },
     { id: 'products', label: 'Seeds', path: '/products' },
     { id: 'agents', label: 'Expert Help', path: '/agents' },
+    
   ];
 
   const handleItemClick = () => {
@@ -35,21 +41,6 @@ const Navigation: React.FC<NavigationProps> = ({
   };
 
   // User display and logout component
-  const UserDisplay = () => (
-    <>
-      <div className="flex items-center">
-        <User className="h-5 w-5 mr-2" />
-        <span className="font-medium">{userRole}</span>
-      </div>
-      <button
-        onClick={() => logout()}
-        className="flex items-center ml-4 text-red-600 hover:text-red-800"
-      >
-        <LogOut className="h-4 w-4 mr-1" />
-        <span className="text-sm">Logout</span>
-      </button>
-    </>
-  );
 
   if (isMobile) {
     return (
@@ -75,7 +66,7 @@ const Navigation: React.FC<NavigationProps> = ({
             <div className="flex items-center justify-between px-4 py-3 mx-2">
               <div className="flex items-center">
                 <User className="h-5 w-5 mr-2 text-green-600" />
-                <span className="font-medium text-green-600">{userRole}</span>
+                <span className="font-medium text-green-600">{user?.firstName}</span>
               </div>
               <button
                 onClick={logout}
@@ -126,7 +117,7 @@ const Navigation: React.FC<NavigationProps> = ({
         <div className="flex items-center">
           <div className="flex items-center px-3 py-2 text-sm font-medium text-green-600">
             <User className="h-4 w-4 mr-2" />
-            {userRole}
+            {user?.firstName}
           </div>
           <button
             onClick={logout}

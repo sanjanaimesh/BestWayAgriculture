@@ -1,11 +1,15 @@
 import React from 'react';
 import { Leaf, Users, Award } from 'lucide-react';
 
-interface HeroProps {
-  setActiveSection: (section: string) => void;
-}
+interface HeroProps {}
 
-const Hero: React.FC<HeroProps> = ({ setActiveSection }) => {
+const Hero: React.FC<HeroProps> = () => {
+  
+  // Navigation using routes
+  const handleNavigation = (path: string) => {
+    window.location.href = path;
+  };
+
   return (
     <section className="bg-gradient-to-r from-green-800 to-green-600 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
@@ -19,13 +23,13 @@ const Hero: React.FC<HeroProps> = ({ setActiveSection }) => {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
             <button 
-              onClick={() => setActiveSection('products')}
+              onClick={() => handleNavigation('/products')}
               className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 sm:py-4 px-6 sm:px-8 rounded-lg transition-colors text-base sm:text-lg"
             >
               Shop Seeds Now
             </button>
             <button 
-              onClick={() => setActiveSection('agents')}
+              onClick={() => handleNavigation('/agents')}
               className="border-2 border-white text-white hover:bg-white hover:text-green-600 font-semibold py-3 sm:py-4 px-6 sm:px-8 rounded-lg transition-colors text-base sm:text-lg"
             >
               Talk to an Expert

@@ -318,44 +318,44 @@ const UserLogin = (): JSX.Element => {
   };
 
   // If already authenticated, show status
-  if (isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="p-8 bg-white shadow-md rounded-md w-full max-w-md text-center">
-          <h2 className="text-2xl font-bold mb-4 text-green-600">Already Logged In</h2>
-          <p className="text-gray-700 mb-2">
-            Welcome <strong>{user?.firstName} {user?.lastName}</strong>!
-          </p>
-          <p className="text-gray-700 mb-4">
-            Role: <strong>{userRole}</strong>
-          </p>
-          <div className="space-y-2">
-            <button
-              onClick={() => navigate('/')}
-              className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-200"
-            >
-              Go to Home
-            </button>
-            {userRole === 'admin' && (
-              <button
-                onClick={() => navigate('/admin')}
-                className="w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition duration-200"
-              >
-                Go to Admin Panel
-              </button>
-            )}
-            <button
-              onClick={handleLogout}
-              className="w-full bg-red-500 text-white py-2 rounded-md hover:bg-red-600 transition duration-200"
-              disabled={loading}
-            >
-              {loading ? 'Logging out...' : 'Logout'}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // if (isAuthenticated) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center bg-gray-50">
+  //       <div className="p-8 bg-white shadow-md rounded-md w-full max-w-md text-center">
+  //         <h2 className="text-2xl font-bold mb-4 text-green-600">Already Logged In</h2>
+  //         <p className="text-gray-700 mb-2">
+  //           Welcome <strong>{user?.firstName} {user?.lastName}</strong>!
+  //         </p>
+  //         <p className="text-gray-700 mb-4">
+  //           Role: <strong>{userRole}</strong>
+  //         </p>
+  //         <div className="space-y-2">
+  //           <button
+  //             onClick={() => navigate('/')}
+  //             className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-200"
+  //           >
+  //             Go to Home
+  //           </button>
+  //           {userRole === 'admin' && (
+  //             <button
+  //               onClick={() => navigate('/admin')}
+  //               className="w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition duration-200"
+  //             >
+  //               Go to Admin Panel
+  //             </button>
+  //           )}
+  //           <button
+  //             onClick={handleLogout}
+  //             className="w-full bg-red-500 text-white py-2 rounded-md hover:bg-red-600 transition duration-200"
+  //             disabled={loading}
+  //           >
+  //             {loading ? 'Logging out...' : 'Logout'}
+  //           </button>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8">
