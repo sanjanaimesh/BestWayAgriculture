@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import { Product, CartItem } from '../types';
+import useLocalStorage from '../../src/hooks/uselocalStorage';
 
 interface CartContextType {
   cartItems: CartItem[];
@@ -24,8 +25,11 @@ interface CartProviderProps {
   children: ReactNode;
 }
 
+const CART_STORAGE_KEY = 'seedShop_cartItems';
+
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  // Use custom hook that handles localStorage automatically
+  const [cartItems, setCartItems] = useLocalStorage<CartItem[]>(CART_STORAGE_KEY, []);
 
   const addToCart = (product: Product) => {
     setCartItems(prevItems => {
@@ -37,7 +41,17 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             : item
         );
       } else {
-        return [...prevItems, { ...product, quantity: 1 }];
+        // Ensure the product has all required properties
+        const cartItem: CartItem = {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          description: product.description,
+          stock: product.stock,
+          quantity: 1
+        };
+        return [...prevItems, cartItem];
       }
     });
   };
@@ -64,7 +78,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   const clearCart = () => {
     setCartItems([]);
+    // The useLocalStorage hook will automatically clear localStorage
   };
+
   return (
     <CartContext.Provider
       value={{

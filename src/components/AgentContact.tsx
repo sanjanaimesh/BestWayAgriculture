@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
-import { Phone, Mail, MessageCircle, Star, Calendar } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Phone, Mail, MessageCircle, Star, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
 
-const AgentContact: React.FC = () => {
-  const [selectedAgent, setSelectedAgent] = useState<number | null>(null);
+const AgentContact = () => {
+  const [filters, setFilters] = useState({
+      search: '',
+      specialty: '',
+      is_active: true
+    });
+  const [notification, setNotification] = useState(null);  
+  const [agents, setAgents] = useState([]);
+  const [selectedAgent, setSelectedAgent] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', null
   const [contactForm, setContactForm] = useState({
     name: '',
     email: '',
@@ -11,58 +20,134 @@ const AgentContact: React.FC = () => {
     cropType: ''
   });
 
-  const agents = [
-    {
-      id: 1,
-      name: 'Dr. aneee Johnson',
-      specialty: 'Vegetable Crops',
-      experience: '15 years',
-      rating: 4.9,
-      phone: '+1 (555) 123-4567',
-      email: 'sarah.johnson@bestwayagriculture.com',
-      image: 'https://images.pexels.com/photos/5327580/pexels-photo-5327580.jpeg?auto=compress&cs=tinysrgb&w=400',
-      bio: 'Specialized in organic vegetable farming with expertise in soil health and sustainable practices.'
-    },
-    {
-      id: 2,
-      name: 'Michael Chen',
-      specialty: 'Grain Production',
-      experience: '12 years',
-      rating: 4.8,
-      phone: '+1 (555) 987-6543',
-      email: 'michael.chen@bestwayagriculture.com',
-      image: 'https://images.pexels.com/photos/5327921/pexels-photo-5327921.jpeg?auto=compress&cs=tinysrgb&w=400',
-      bio: 'Expert in large-scale grain production with focus on yield optimization and modern farming techniques.'
-    },
-    {
-      id: 3,
-      name: 'Dr. sanajna Rodriguez',
-      specialty: 'Crop Disease Management',
-      experience: '18 years',
-      rating: 4.9,
-      phone: '+1 (555) 456-7890',
-      email: 'emily.rodriguez@bestwayagriculture.com',
-      image: 'https://images.pexels.com/photos/5327647/pexels-photo-5327647.jpeg?auto=compress&cs=tinysrgb&w=400',
-      bio: 'Plant pathologist specializing in integrated pest management and disease prevention strategies.'
-    }
-  ];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission
-    console.log('Form submitted:', contactForm);
-    // Reset form
-    setContactForm({
-      name: '',
-      email: '',
-      phone: '',
-      message: '',
-      cropType: ''
-    });
-    alert('Thank you! An expert will contact you within 24 hours.');
+   const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 5000);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const API_BASE_URL = 'http://localhost:4000';
+
+    const fetchAgents = async () => {
+    try {
+      setLoading(true);
+      const queryParams = new URLSearchParams();
+      
+      if (filters.search) queryParams.append('search', filters.search);
+      if (filters.specialty) queryParams.append('specialty', filters.specialty);
+      if (filters.is_active !== undefined) queryParams.append('is_active', filters.is_active);
+
+      const response = await fetch(`${API_BASE_URL}/agents?${queryParams}`);
+      const result = await response.json();
+
+      if (result.success) {
+        setAgents(result.data);
+      } else {
+        showNotification('Failed to fetch agents', 'error');
+      }
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+      showNotification('Error connecting to server', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchAgents();
+  }, [filters]);
+  // const agents = [
+  //   {
+  //     id: 1,
+  //     name: 'Dr. Sarah Johnson',
+  //     specialty: 'Vegetable Crops',
+  //     experience: '15 years',
+  //     rating: 4.9,
+  //     phone: '+1 (555) 123-4567',
+  //     email: 'sarah.johnson@bestwayagriculture.com',
+  //     image: 'https://images.pexels.com/photos/5327580/pexels-photo-5327580.jpeg?auto=compress&cs=tinysrgb&w=400',
+  //     bio: 'Specialized in organic vegetable farming with expertise in soil health and sustainable practices.'
+  //   },
+  //   {
+  //     id: 2,
+  //     name: 'Michael Chen',
+  //     specialty: 'Grain Production',
+  //     experience: '12 years',
+  //     rating: 4.8,
+  //     phone: '+1 (555) 987-6543',
+  //     email: 'michael.chen@bestwayagriculture.com',
+  //     image: 'https://images.pexels.com/photos/5327921/pexels-photo-5327921.jpeg?auto=compress&cs=tinysrgb&w=400',
+  //     bio: 'Expert in large-scale grain production with focus on yield optimization and modern farming techniques.'
+  //   },
+  //   {
+  //     id: 3,
+  //     name: 'Dr. Emily Rodriguez',
+  //     specialty: 'Crop Disease Management',
+  //     experience: '18 years',
+  //     rating: 4.9,
+  //     phone: '+1 (555) 456-7890',
+  //     email: 'emily.rodriguez@bestwayagriculture.com',
+  //     image: 'https://images.pexels.com/photos/5327647/pexels-photo-5327647.jpeg?auto=compress&cs=tinysrgb&w=400',
+  //     bio: 'Plant pathologist specializing in integrated pest management and disease prevention strategies.'
+  //   }
+  // ];
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setSubmitStatus(null);
+
+    try {
+      // Prepare data for API
+      const selectedAgentData = selectedAgent ? agents.find(a => a.id === selectedAgent) : null;
+      
+      const submitData = {
+        name: contactForm.name,
+        email: contactForm.email,
+        phone: contactForm.phone || null,
+        cropType: contactForm.cropType || null,
+        message: contactForm.message,
+        selectedAgentId: selectedAgentData?.id || null,
+        selectedAgentName: selectedAgentData?.name || null
+      };
+
+      const response = await fetch(`${API_BASE_URL}/api/contacts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submitData)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setSubmitStatus('success');
+        // Reset form
+        setContactForm({
+          name: '',
+          email: '',
+          phone: '',
+          message: '',
+          cropType: ''
+        });
+        setSelectedAgent(null);
+        
+        // Auto-hide success message after 5 seconds
+        setTimeout(() => {
+          setSubmitStatus(null);
+        }, 5000);
+      } else {
+        setSubmitStatus('error');
+        console.error('API Error:', result.message);
+      }
+    } catch (error) {
+      console.error('Network Error:', error);
+      setSubmitStatus('error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (e) => {
     setContactForm({
       ...contactForm,
       [e.target.name]: e.target.value
@@ -81,6 +166,35 @@ const AgentContact: React.FC = () => {
           </p>
         </div>
 
+        {/* Success/Error Messages */}
+        {submitStatus === 'success' && (
+          <div className="max-w-2xl mx-auto mb-8">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center">
+              <CheckCircle className="h-6 w-6 text-green-600 mr-3" />
+              <div>
+                <h3 className="text-green-800 font-semibold">Request Submitted Successfully!</h3>
+                <p className="text-green-700 text-sm mt-1">
+                  Thank you for contacting us. An expert will reach out to you within 24 hours.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {submitStatus === 'error' && (
+          <div className="max-w-2xl mx-auto mb-8">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center">
+              <AlertCircle className="h-6 w-6 text-red-600 mr-3" />
+              <div>
+                <h3 className="text-red-800 font-semibold">Submission Failed</h3>
+                <p className="text-red-700 text-sm mt-1">
+                  Sorry, there was an error submitting your request. Please try again.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Agent Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-12">
           {agents.map((agent) => (
@@ -93,10 +207,10 @@ const AgentContact: React.FC = () => {
                 />
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{agent.name}</h3>
                 <p className="text-green-600 font-medium text-sm sm:text-base">{agent.specialty}</p>
-                <div className="flex items-center justify-center mt-2">
+                {/* <div className="flex items-center justify-center mt-2">
                   <Star className="h-5 w-5 text-yellow-400 fill-current" />
                   <span className="ml-1 text-sm text-gray-600">{agent.rating} • {agent.experience}</span>
-                </div>
+                </div> */}
               </div>
               <p className="text-gray-600 text-sm mb-4">{agent.bio}</p>
               <div className="space-y-2">
@@ -111,10 +225,14 @@ const AgentContact: React.FC = () => {
               </div>
               <button
                 onClick={() => setSelectedAgent(agent.id)}
-                className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center text-base"
+                className={`w-full mt-4 font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center text-base ${
+                  selectedAgent === agent.id
+                    ? 'bg-green-700 text-white'
+                    : 'bg-green-600 hover:bg-green-700 text-white'
+                }`}
               >
                 <MessageCircle className="h-5 w-5 mr-2" />
-                Contact Expert
+                {selectedAgent === agent.id ? 'Selected' : 'Contact Expert'}
               </button>
             </div>
           ))}
@@ -153,17 +271,10 @@ const AgentContact: React.FC = () => {
             )}
           </div>
           <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
-            {selectedAgent && (
-              <input
-                type="hidden"
-                name="selectedExpert"
-                value={agents.find(a => a.id === selectedAgent)?.name || ''}
-              />
-            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
+                  Full Name *
                 </label>
                 <input
                   type="text"
@@ -171,12 +282,13 @@ const AgentContact: React.FC = () => {
                   value={contactForm.name}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base"
+                  disabled={loading}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
+                  Email Address *
                 </label>
                 <input
                   type="email"
@@ -184,7 +296,8 @@ const AgentContact: React.FC = () => {
                   value={contactForm.email}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base"
+                  disabled={loading}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
@@ -196,7 +309,8 @@ const AgentContact: React.FC = () => {
                   name="phone"
                   value={contactForm.phone}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base"
+                  disabled={loading}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
@@ -207,7 +321,8 @@ const AgentContact: React.FC = () => {
                   name="cropType"
                   value={contactForm.cropType}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base"
+                  disabled={loading}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="">Select crop type</option>
                   <option value="vegetables">Vegetables</option>
@@ -220,7 +335,7 @@ const AgentContact: React.FC = () => {
             </div>
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Message
+                Message *
               </label>
               <textarea
                 name="message"
@@ -228,19 +343,30 @@ const AgentContact: React.FC = () => {
                 onChange={handleInputChange}
                 rows={4}
                 required
+                disabled={loading}
                 placeholder={selectedAgent 
                   ? `Tell ${agents.find(a => a.id === selectedAgent)?.name} about your farming needs, challenges, or questions...`
                   : "Tell us about your farming needs, challenges, or questions..."
                 }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors flex items-center justify-center text-base"
+              disabled={loading}
+              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors flex items-center justify-center text-base"
             >
-              <Calendar className="h-5 w-5 mr-2" />
-              {selectedAgent ? 'Contact Selected Expert' : 'Request Consultation'}
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Calendar className="h-5 w-5 mr-2" />
+                  {selectedAgent ? 'Contact Selected Expert' : 'Request Consultation'}
+                </>
+              )}
             </button>
           </form>
         </div>

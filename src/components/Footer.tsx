@@ -4,7 +4,9 @@ import { Sprout, Facebook, Twitter, Instagram, Mail, Phone, MapPin } from 'lucid
 interface FooterProps {
   setActiveSection: (section: string) => void;
 }
-
+const handleNavigation = (path: string) => {
+    window.location.href = path;
+  };
 const Footer: React.FC<FooterProps> = ({ setActiveSection }) => {
   return (
     <footer className="bg-gray-900 text-white">
@@ -32,7 +34,7 @@ const Footer: React.FC<FooterProps> = ({ setActiveSection }) => {
             <ul className="space-y-2">
               <li>
                 <button 
-                  onClick={() => setActiveSection('about')}
+                  onClick={() => handleNavigation('/about')}
                   className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base text-left"
                 >
                   About Us
@@ -40,14 +42,19 @@ const Footer: React.FC<FooterProps> = ({ setActiveSection }) => {
               </li>
               <li>
                 <button 
-                  onClick={() => setActiveSection('products')}
+                  onClick={() => handleNavigation('/products')}
                   className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base text-left"
                 >
                   Our Seeds
                 </button>
               </li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">Expert Advice</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">Growing Guides</a></li>
+              <li><button 
+                  onClick={() => handleNavigation('/agents')}
+                  className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base text-left"
+                >
+                  Expert Help
+                </button></li>
+              
             </ul>
           </div>
 
@@ -68,15 +75,15 @@ const Footer: React.FC<FooterProps> = ({ setActiveSection }) => {
             <div className="space-y-2">
               <div className="flex items-center text-sm sm:text-base">
                 <Phone className="h-5 w-5 text-gray-400 mr-2" />
-                <span className="text-gray-400">+1 (555) 123-AGRI</span>
+                <span className="text-gray-400">077 695919</span>
               </div>
               <div className="flex items-center text-sm sm:text-base">
                 <Mail className="h-5 w-5 text-gray-400 mr-2" />
-                <span className="text-gray-400">info@agriseeds.com</span>
+                <span className="text-gray-400">sanjanaimesh@gmail.com</span>
               </div>
               <div className="flex items-center text-sm sm:text-base">
                 <MapPin className="h-5 w-5 text-gray-400 mr-2" />
-                <span className="text-gray-400">123 Farm Road, Agriculture City</span>
+                <span className="text-gray-400">Matale Rattota</span>
               </div>
             </div>
           </div>

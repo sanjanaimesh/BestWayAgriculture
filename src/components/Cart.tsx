@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Minus, Plus, ShoppingBag } from 'lucide-react';
+import { X, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import Checkout from './Checkout';
 
@@ -9,12 +9,19 @@ interface CartProps {
 }
 
 const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
-  const { cartItems, removeFromCart, updateQuantity, getCartTotal } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
   const [isCheckoutOpen, setIsCheckoutOpen] = React.useState(false);
 
   const handleProceedToCheckout = () => {
     setIsCheckoutOpen(true);
   };
+
+  const handleClearCart = () => {
+    if (window.confirm('Are you sure you want to clear your cart?')) {
+      clearCart();
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -26,12 +33,23 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="text-lg sm:text-xl font-semibold">Shopping Cart</h2>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-manipulation"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center space-x-2">
+                {cartItems.length > 0 && (
+                  <button
+                    onClick={handleClearCart}
+                    className="p-2 hover:bg-red-50 text-red-600 rounded-full transition-colors touch-manipulation"
+                    title="Clear Cart"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-manipulation"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {/* Cart Items */}
@@ -40,6 +58,9 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
                 <div className="text-center py-12">
                   <ShoppingBag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-500 text-sm sm:text-base">Your cart is empty</p>
+                  <p className="text-gray-400 text-xs sm:text-sm mt-2">
+                    Add some seeds to get started!
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-3 sm:space-y-4">
@@ -53,10 +74,14 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-900 text-sm sm:text-base leading-tight">{item.name}</h3>
                         <p className="text-sm text-gray-600">LKR {item.price.toLocaleString()}</p>
+                        <p className="text-xs text-green-600 font-medium">
+                          Subtotal: LKR {(item.price * item.quantity).toLocaleString()}
+                        </p>
                         <div className="flex items-center space-x-2 mt-2">
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
                             className="p-1 hover:bg-gray-200 rounded transition-colors touch-manipulation"
+                            disabled={item.quantity <= 1}
                           >
                             <Minus className="h-4 w-4" />
                           </button>
@@ -73,7 +98,8 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
                       </div>
                       <button
                         onClick={() => removeFromCart(item.id)}
-                        className="p-2 hover:bg-gray-200 rounded transition-colors touch-manipulation flex-shrink-0"
+                        className="p-2 hover:bg-red-100 text-red-600 rounded transition-colors touch-manipulation flex-shrink-0"
+                        title="Remove item"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -86,11 +112,17 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
             {/* Footer */}
             {cartItems.length > 0 && (
               <div className="border-t p-3 sm:p-4 space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-base sm:text-lg font-semibold">Total:</span>
-                  <span className="text-xl sm:text-2xl font-bold text-green-600">
-                    LKR {getCartTotal().toLocaleString()}
-                  </span>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span>Items ({cartItems.reduce((sum, item) => sum + item.quantity, 0)}):</span>
+                    <span>Rs {getCartTotal().toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-t pt-2">
+                    <span className="text-base sm:text-lg font-semibold">Total:</span>
+                    <span className="text-xl sm:text-2xl font-bold text-green-600">
+                      Rs {getCartTotal().toLocaleString()}
+                    </span>
+                  </div>
                 </div>
                 <button 
                   onClick={handleProceedToCheckout}
@@ -113,3 +145,4 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
 };
 
 export default Cart;
+

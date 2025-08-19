@@ -1,24 +1,23 @@
 import React from 'react';
 import { Sprout, ShoppingCart, Menu, X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import Navigation from './Nav';
 
-interface HeaderProps {
+interface Nav {
   activeSection: string;
   setActiveSection: (section: string) => void;
   setIsCartOpen: (isOpen: boolean) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ activeSection, setActiveSection, setIsCartOpen }) => {
+const Nav: React.FC<Nav> = ({ activeSection, setActiveSection, setIsCartOpen }) => {
   const { cartItems } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const navItems = [
-    { id: 'home', label: 'Home' },
-    { id: 'products', label: 'Seeds' },
-    { id: 'agents', label: 'Expert Help' },
-  ];
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -30,21 +29,10 @@ const Header: React.FC<HeaderProps> = ({ activeSection, setActiveSection, setIsC
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex space-x-8">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveSection(item.id)}
-                className={`text-sm font-medium transition-colors px-3 py-2 rounded-md ${
-                  activeSection === item.id
-                    ? 'text-green-600 bg-green-50'
-                    : 'text-gray-700 hover:text-green-600'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </nav>
+          <Navigation 
+            activeSection={activeSection} 
+            setActiveSection={setActiveSection} 
+          />
 
           {/* Cart and Mobile Menu */}
           <div className="flex items-center space-x-4">
@@ -72,30 +60,16 @@ const Header: React.FC<HeaderProps> = ({ activeSection, setActiveSection, setIsC
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden py-4 border-t bg-white">
-            <nav className="space-y-4">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveSection(item.id);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`block w-full text-left px-4 py-3 text-base font-medium transition-colors rounded-md mx-2 ${
-                    activeSection === item.id
-                      ? 'text-green-600 bg-green-50'
-                      : 'text-gray-700 hover:text-green-600 hover:bg-gray-50'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </nav>
-          </div>
+          <Navigation 
+            activeSection={activeSection} 
+            setActiveSection={setActiveSection}
+            isMobile={true}
+            onMobileItemClick={closeMobileMenu}
+          />
         )}
       </div>
     </header>
   );
 };
 
-export default Header;
+export default Nav;
