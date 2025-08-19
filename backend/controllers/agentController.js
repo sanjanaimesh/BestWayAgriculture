@@ -83,59 +83,63 @@ class AgentController {
   }
 
   // POST /api/agents - Create new agent
-  static async createAgent(req, res) {
-    try {
-      const agentData = {
-        name: req.body.name,
-        specialty: req.body.specialty,
-        experience: req.body.experience,
-        rating: req.body.rating || 0.0,
-        phone: req.body.phone,
-        email: req.body.email,
-        image_url: req.body.image || req.body.image_url,
-        bio: req.body.bio,
-        is_active: req.body.is_active !== undefined ? req.body.is_active : true
-      };
+static async createAgent(req, res) {
+  try {
+    const agentData = {
+      name: req.body.name,
+      specialty: req.body.specialty,
+      experience: req.body.experience,
+      phone: req.body.phone,
+      email: req.body.email,
+      bio: req.body.bio,
+      is_active: req.body.is_active !== undefined ? req.body.is_active : true
+    };
 
-      const agent = new Agent(agentData);
-      
-      // Validate data
-      const validationErrors = agent.validateData();
-      if (validationErrors.length > 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation failed',
-          errors: validationErrors
-        });
-      }
+    // Add image only if provided
+    if (req.body.image || req.body.image_url) {
+      agentData.image_url = req.body.image || req.body.image_url;
+    }
 
-      // Save agent
-      const savedAgent = await agent.save();
-
-      res.status(201).json({
-        success: true,
-        message: 'Agent created successfully',
-        data: savedAgent.toJSON()
-      });
-    } catch (error) {
-      console.error('Error in createAgent:', error);
-      
-      // Handle duplicate email error
-      if (error.message.includes('email already exists')) {
-        return res.status(409).json({
-          success: false,
-          message: 'An agent with this email already exists',
-          error: error.message
-        });
-      }
-
-      res.status(500).json({
+    const agent = new Agent(agentData);
+    
+    // Validate data
+    const validationErrors = agent.validateData();
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
         success: false,
-        message: 'Failed to create agent',
+        message: 'Validation failed',
+        errors: validationErrors
+      });
+    }
+
+    // Save agent
+    const savedAgent = await agent.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Agent created successfully',
+      data: savedAgent.toJSON()
+    });
+  } catch (error) {
+    console.error('Error in createAgent:', error);
+    
+    // Handle duplicate email error
+    if (error.message.includes('email already exists')) {
+      return res.status(409).json({
+        success: false,
+        message: 'An agent with this email already exists',
         error: error.message
       });
     }
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create agent',
+      error: error.message
+    });
   }
+}
+
 
   // PUT /api/agents/:id - Update existing agent
   static async updateAgent(req, res) {

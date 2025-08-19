@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Phone, Mail, MessageCircle, Star, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
 
 const AgentContact = () => {
+  const [filters, setFilters] = useState({
+      search: '',
+      specialty: '',
+      is_active: true
+    });
+  const [notification, setNotification] = useState(null);  
+  const [agents, setAgents] = useState([]);
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', null
@@ -13,43 +20,75 @@ const AgentContact = () => {
     cropType: ''
   });
 
+   const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 5000);
+  };
+
   const API_BASE_URL = 'http://localhost:4000';
 
-  const agents = [
-    {
-      id: 1,
-      name: 'Dr. Sarah Johnson',
-      specialty: 'Vegetable Crops',
-      experience: '15 years',
-      rating: 4.9,
-      phone: '+1 (555) 123-4567',
-      email: 'sarah.johnson@bestwayagriculture.com',
-      image: 'https://images.pexels.com/photos/5327580/pexels-photo-5327580.jpeg?auto=compress&cs=tinysrgb&w=400',
-      bio: 'Specialized in organic vegetable farming with expertise in soil health and sustainable practices.'
-    },
-    {
-      id: 2,
-      name: 'Michael Chen',
-      specialty: 'Grain Production',
-      experience: '12 years',
-      rating: 4.8,
-      phone: '+1 (555) 987-6543',
-      email: 'michael.chen@bestwayagriculture.com',
-      image: 'https://images.pexels.com/photos/5327921/pexels-photo-5327921.jpeg?auto=compress&cs=tinysrgb&w=400',
-      bio: 'Expert in large-scale grain production with focus on yield optimization and modern farming techniques.'
-    },
-    {
-      id: 3,
-      name: 'Dr. Emily Rodriguez',
-      specialty: 'Crop Disease Management',
-      experience: '18 years',
-      rating: 4.9,
-      phone: '+1 (555) 456-7890',
-      email: 'emily.rodriguez@bestwayagriculture.com',
-      image: 'https://images.pexels.com/photos/5327647/pexels-photo-5327647.jpeg?auto=compress&cs=tinysrgb&w=400',
-      bio: 'Plant pathologist specializing in integrated pest management and disease prevention strategies.'
+    const fetchAgents = async () => {
+    try {
+      setLoading(true);
+      const queryParams = new URLSearchParams();
+      
+      if (filters.search) queryParams.append('search', filters.search);
+      if (filters.specialty) queryParams.append('specialty', filters.specialty);
+      if (filters.is_active !== undefined) queryParams.append('is_active', filters.is_active);
+
+      const response = await fetch(`${API_BASE_URL}/agents?${queryParams}`);
+      const result = await response.json();
+
+      if (result.success) {
+        setAgents(result.data);
+      } else {
+        showNotification('Failed to fetch agents', 'error');
+      }
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+      showNotification('Error connecting to server', 'error');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+  useEffect(() => {
+    fetchAgents();
+  }, [filters]);
+  // const agents = [
+  //   {
+  //     id: 1,
+  //     name: 'Dr. Sarah Johnson',
+  //     specialty: 'Vegetable Crops',
+  //     experience: '15 years',
+  //     rating: 4.9,
+  //     phone: '+1 (555) 123-4567',
+  //     email: 'sarah.johnson@bestwayagriculture.com',
+  //     image: 'https://images.pexels.com/photos/5327580/pexels-photo-5327580.jpeg?auto=compress&cs=tinysrgb&w=400',
+  //     bio: 'Specialized in organic vegetable farming with expertise in soil health and sustainable practices.'
+  //   },
+  //   {
+  //     id: 2,
+  //     name: 'Michael Chen',
+  //     specialty: 'Grain Production',
+  //     experience: '12 years',
+  //     rating: 4.8,
+  //     phone: '+1 (555) 987-6543',
+  //     email: 'michael.chen@bestwayagriculture.com',
+  //     image: 'https://images.pexels.com/photos/5327921/pexels-photo-5327921.jpeg?auto=compress&cs=tinysrgb&w=400',
+  //     bio: 'Expert in large-scale grain production with focus on yield optimization and modern farming techniques.'
+  //   },
+  //   {
+  //     id: 3,
+  //     name: 'Dr. Emily Rodriguez',
+  //     specialty: 'Crop Disease Management',
+  //     experience: '18 years',
+  //     rating: 4.9,
+  //     phone: '+1 (555) 456-7890',
+  //     email: 'emily.rodriguez@bestwayagriculture.com',
+  //     image: 'https://images.pexels.com/photos/5327647/pexels-photo-5327647.jpeg?auto=compress&cs=tinysrgb&w=400',
+  //     bio: 'Plant pathologist specializing in integrated pest management and disease prevention strategies.'
+  //   }
+  // ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -21,8 +21,6 @@ const AdminPanel = () => {
 
   const renderContent = () => {
     switch (activeItem) {
-      case '/admin/dashboard':
-        return <Dashboard />;
       case '/admin/products':
         return <Products />;
       case '/admin/orders':
@@ -36,7 +34,7 @@ const AdminPanel = () => {
        case '/admin/agent':
         return <Agent />;
       default:
-        return <Dashboard />;
+        return <Orders />;
     }
   };
 
