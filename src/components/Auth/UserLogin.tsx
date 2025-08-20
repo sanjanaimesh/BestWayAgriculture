@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../components/Auth/Providers/AuthProvider';
 
 const API_BASE_URL = 'http://localhost:4000';
@@ -22,6 +23,10 @@ const UserLogin = (): JSX.Element => {
   const [successMessage, setSuccessMessage] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
+  
+  // Password visibility states
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   
   // Registration form state
   const [registrationData, setRegistrationData] = useState<RegistrationData>({
@@ -55,6 +60,15 @@ const UserLogin = (): JSX.Element => {
     console.log('Current token in localStorage:', localStorage.getItem('token'));
   }, []);
 
+  // Toggle password visibility functions
+  const toggleLoginPasswordVisibility = () => {
+    setShowLoginPassword(!showLoginPassword);
+  };
+
+  const toggleRegisterPasswordVisibility = () => {
+    setShowRegisterPassword(!showRegisterPassword);
+  };
+
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -77,7 +91,7 @@ const UserLogin = (): JSX.Element => {
     console.log('Attempting login with:', { username, password: '***' }); 
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/login`, {
+      const response = await fetch(`http://localhost:4000/api/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,6 +110,9 @@ const UserLogin = (): JSX.Element => {
         
         if (data.data?.token) {
           localStorage.setItem('token', data.data.token);
+        }
+        if (data.data?.userId) {
+          localStorage.setItem('userId', data.data.userId);
         }
         if (data.data?.user) {
           localStorage.setItem('user', JSON.stringify(data.data.user));
@@ -303,9 +320,11 @@ const UserLogin = (): JSX.Element => {
     setIsLoginMode(!isLoginMode);
     setError('');
     setSuccessMessage('');
-    // Reset forms
+    // Reset forms and password visibility
     setUsername('');
     setPassword('');
+    setShowLoginPassword(false);
+    setShowRegisterPassword(false);
     setRegistrationData({
       firstName: '',
       lastName: '',
@@ -316,46 +335,6 @@ const UserLogin = (): JSX.Element => {
       password: ''
     });
   };
-
-  // If already authenticated, show status
-  // if (isAuthenticated) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-  //       <div className="p-8 bg-white shadow-md rounded-md w-full max-w-md text-center">
-  //         <h2 className="text-2xl font-bold mb-4 text-green-600">Already Logged In</h2>
-  //         <p className="text-gray-700 mb-2">
-  //           Welcome <strong>{user?.firstName} {user?.lastName}</strong>!
-  //         </p>
-  //         <p className="text-gray-700 mb-4">
-  //           Role: <strong>{userRole}</strong>
-  //         </p>
-  //         <div className="space-y-2">
-  //           <button
-  //             onClick={() => navigate('/')}
-  //             className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-200"
-  //           >
-  //             Go to Home
-  //           </button>
-  //           {userRole === 'admin' && (
-  //             <button
-  //               onClick={() => navigate('/admin')}
-  //               className="w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition duration-200"
-  //             >
-  //               Go to Admin Panel
-  //             </button>
-  //           )}
-  //           <button
-  //             onClick={handleLogout}
-  //             className="w-full bg-red-500 text-white py-2 rounded-md hover:bg-red-600 transition duration-200"
-  //             disabled={loading}
-  //           >
-  //             {loading ? 'Logging out...' : 'Logout'}
-  //           </button>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8">
@@ -424,19 +403,35 @@ const UserLogin = (): JSX.Element => {
                 placeholder="Enter your username"
               />
             </div>
+            
             <div className="mb-4">
               <label className="block text-gray-700 mb-2" htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                required
-                placeholder="Enter your password"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showLoginPassword ? "text" : "password"}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  required
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={toggleLoginPasswordVisibility}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  disabled={loading}
+                >
+                  {showLoginPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
             </div>
+            
             <div className="mb-6 flex items-center">
               <input
                 id="rememberMe"
@@ -450,6 +445,7 @@ const UserLogin = (): JSX.Element => {
                 Keep me logged in
               </label>
             </div>
+            
             <button
               type="submit"
               className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-200 disabled:bg-blue-300"
@@ -550,16 +546,30 @@ const UserLogin = (): JSX.Element => {
 
             <div className="mb-6">
               <label className="block text-gray-700 mb-2" htmlFor="regPassword">Password</label>
-              <input
-                id="regPassword"
-                type="password"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={registrationData.password}
-                onChange={(e) => handleRegistrationChange('password', e.target.value)}
-                disabled={loading}
-                required
-                placeholder="Enter password (min 6 characters)"
-              />
+              <div className="relative">
+                <input
+                  id="regPassword"
+                  type={showRegisterPassword ? "text" : "password"}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={registrationData.password}
+                  onChange={(e) => handleRegistrationChange('password', e.target.value)}
+                  disabled={loading}
+                  required
+                  placeholder="Enter password (min 6 characters)"
+                />
+                <button
+                  type="button"
+                  onClick={toggleRegisterPasswordVisibility}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  disabled={loading}
+                >
+                  {showRegisterPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
               <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
             </div>
 

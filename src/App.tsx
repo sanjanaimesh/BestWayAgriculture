@@ -15,6 +15,7 @@ import ProtectedRoute from './../src/components/Routes/ProtectRoutes';
 import { AuthProvider } from '../src/components/Auth/Providers/AuthProvider';
 import AdminPanel from './components/Admin';
 import UserCRUD from './components/Crud';
+import Profile from './components/Profile';
 
 type SectionType = 'home' | 'about' | 'products' | 'agents'| 'seeds';
 
@@ -47,7 +48,14 @@ function AppContent(): JSX.Element {
           <Route path="/products" element={<ProductCatalog />} />
           <Route path="/agents" element={<AgentContact />} />
           <Route path="/crud" element={<UserCRUD />} />
-          <Route path="/about" element={<AboutUs />} />
+          
+          {/* Protected Profile Route - No userId prop needed, Profile gets it from localStorage */}
+          <Route path="/profile" element={
+          
+              <Profile />
+         
+          } />
+          
           <Route path="/" element={
             <>
               <Hero setActiveSection={setActiveSection} />
