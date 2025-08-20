@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Eye, Package, Truck, CheckCircle, Clock, XCircle, Edit, Plus, Trash2, Save, X } from 'lucide-react';
+import { Search, Filter, Eye, Package, Truck, CheckCircle, Clock, XCircle, Edit, Plus, Trash2, Save, X, ShoppingCart } from 'lucide-react';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -40,7 +40,6 @@ const Orders = () => {
       
       const response = await fetch(`${API_BASE}/orders`);
       console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -48,8 +47,6 @@ const Orders = () => {
       
       const data = await response.json();
       console.log('Raw API response:', data);
-      console.log('Type of data:', typeof data);
-      console.log('Is data an array?', Array.isArray(data));
       
       // More flexible data handling
       let ordersArray = [];
@@ -64,15 +61,52 @@ const Orders = () => {
       }
       
       console.log('Processed orders array:', ordersArray);
-      console.log('Orders count:', ordersArray.length);
+      console.log('Sample order with items check:', ordersArray[0]);
       
-      setOrders(ordersArray);
+      // Fetch items for each order if not included
+      const ordersWithItems = await Promise.all(
+        ordersArray.map(async (order) => {
+          if (!order.items || order.items.length === 0) {
+            console.log(`Fetching items for order ${order.id}`);
+            const orderWithItems = await fetchOrderWithItems(order.id);
+            return orderWithItems || order;
+          }
+          return order;
+        })
+      );
+      
+      console.log('Orders with items:', ordersWithItems);
+      setOrders(ordersWithItems);
     } catch (err) {
       console.error('Fetch error:', err);
       setError('Failed to load orders: ' + err.message);
       setOrders([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch order with items
+  const fetchOrderWithItems = async (orderId) => {
+    try {
+      console.log(`Fetching order details for ID: ${orderId}`);
+      const response = await fetch(`${API_BASE}/orders/${orderId}`);
+      if (!response.ok) {
+        console.error(`Failed to fetch order ${orderId}:`, response.status);
+        return null;
+      }
+      const orderData = await response.json();
+      console.log(`Order ${orderId} details:`, orderData);
+      
+      // Handle different response structures
+      const order = orderData.data || orderData;
+      console.log(`Processed order ${orderId}:`, order);
+      console.log(`Order ${orderId} items:`, order.items);
+      
+      return order;
+    } catch (err) {
+      console.error('Error fetching order details:', err);
+      return null;
     }
   };
 
@@ -180,8 +214,7 @@ const Orders = () => {
       setEditingOrder(null);
       
       if (selectedOrder && selectedOrder.id === orderId) {
-        const updatedOrders = Array.isArray(orders) ? orders : [];
-        const updatedOrder = updatedOrders.find(o => o.id === orderId);
+        const updatedOrder = await fetchOrderWithItems(orderId);
         if (updatedOrder) {
           setSelectedOrder(updatedOrder);
         }
@@ -232,36 +265,39 @@ const Orders = () => {
 
   // Update order status quickly
   const updateOrderStatus = async (orderId, newStatus) => {
-  try {
-    console.log(`Updating order ${orderId} status to: ${newStatus}`);
-    
-    // Use the status-specific endpoint
-    const response = await fetch(`http://localhost:4000/orders/${orderId}/status`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      // Only send the status field
-      body: JSON.stringify({ 
-        status: newStatus 
-      }),
-    });
+    try {
+      console.log(`Updating order ${orderId} status to: ${newStatus}`);
+      
+      const response = await fetch(`${API_BASE}/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          status: newStatus 
+        }),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Status update error:', response.status, errorData);
-      throw new Error(`Failed to update order status: ${response.status} - ${JSON.stringify(errorData)}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Status update error:', response.status, errorData);
+        throw new Error(`Failed to update order status: ${response.status} - ${JSON.stringify(errorData)}`);
+      }
+
+      const result = await response.json();
+      console.log('Status update successful:', result);
+      
+      // Refresh orders list
+      await fetchOrders();
+      
+      return result.data; 
+      
+    } catch (error) {
+      console.error('Update order status error:', error);
+      setError('Failed to update order status: ' + error.message);
+      throw error;
     }
-
-    const result = await response.json();
-    console.log('Status update successful:', result);
-    return result.data; 
-    
-  } catch (error) {
-    console.error('Update order status error:', error);
-    throw error;
-  }
-};
+  };
 
   const filteredOrders = Array.isArray(orders) ? orders.filter(order => {
     const searchFields = [
@@ -298,19 +334,18 @@ const Orders = () => {
     return statusIcons[status] || Package; 
   };
 
-  // Test API Connection Button
-  const testConnection = async () => {
-    try {
-      console.log('Testing API connection...');
-      const response = await fetch(`${API_BASE}/orders`);
-      console.log('Test response status:', response.status);
-      const text = await response.text();
-      console.log('Test response body:', text);
-      alert(`API Test:\nStatus: ${response.status}\nResponse: ${text.substring(0, 200)}...`);
-    } catch (err) {
-      console.error('Connection test failed:', err);
-      alert(`Connection failed: ${err.message}`);
+  // Format items summary for table display
+  const formatItemsSummary = (order) => {
+    if (!order.items || order.items.length === 0) {
+      return 'No items';
     }
+    
+    if (order.items.length === 1) {
+      const item = order.items[0];
+      return `${item.product_name} (${item.quantity})`;
+    }
+    
+    return `${order.items.length} items`;
   };
 
   // Order Form Component
@@ -640,7 +675,7 @@ const Orders = () => {
                   
                   <div className="text-right">
                     <span className="text-sm text-gray-600">Item Total: </span>
-                    <span className="font-semibold">${parseFloat(item.total || 0).toFixed(2)}</span>
+                    <span className="font-semibold">Rs{parseFloat(item.total || 0).toFixed(2)}</span>
                   </div>
                 </div>
               ))}
@@ -743,44 +778,64 @@ const Orders = () => {
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">Order Items</h3>
-              <div className="space-y-2">
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <ShoppingCart size={20} />
+                Order Items ({order.items?.length || 0} {order.items?.length === 1 ? 'item' : 'items'})
+              </h3>
+              <div className="space-y-3">
                 {order.items && order.items.length > 0 ? (
                   order.items.map((item, index) => (
-                    <div key={index} className="bg-gray-50 p-3 rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <span className="font-medium text-gray-900">{item.product_name}</span>
-                          <span className="text-gray-600 ml-2">x{item.quantity}</span>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-gray-600">${parseFloat(item.price).toFixed(2)} each</div>
-                          <div className="font-semibold">${parseFloat(item.total).toFixed(2)}</div>
+                    <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Package size={16} className="text-gray-600" />
+                            <span className="font-semibold text-gray-900 text-lg">{item.product_name}</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-4 text-sm text-gray-600">
+                            <div>
+                              <span className="font-medium">Quantity:</span>
+                              <span className="ml-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full">{item.quantity}</span>
+                            </div>
+                            <div>
+                              <span className="font-medium">Unit Price:</span>
+                              <span className="ml-1">Rs{parseFloat(item.price).toFixed(2)}</span>
+                            </div>
+                            <div>
+                              <span className="font-medium">Subtotal:</span>
+                              <span className="ml-1 font-semibold text-gray-900">Rs{parseFloat(item.total_price || item.total || (item.price * item.quantity)).toFixed(2)}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="text-gray-500 text-center py-4">No items found for this order</div>
+                  <div className="text-gray-500 text-center py-8 bg-gray-50 rounded-lg">
+                    <ShoppingCart size={48} className="mx-auto mb-2 text-gray-300" />
+                    <p>No items found for this order</p>
+                  </div>
                 )}
               </div>
             </div>
 
             <div>
               <h3 className="text-lg font-semibold mb-3">Order Summary</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium">${parseFloat(order.subtotal).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600">Shipping:</span>
-                  <span className="font-medium">${parseFloat(order.shipping_cost).toFixed(2)}</span>
-                </div>
-                <div className="border-t pt-2">
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-lg font-semibold">Total:</span>
-                    <span className="text-lg font-bold text-green-600">Rs{parseFloat(order.total).toFixed(2)}</span>
+                    <span className="text-gray-600">Subtotal:</span>
+                    <span className="font-medium">Rs{parseFloat(order.subtotal).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Shipping:</span>
+                    <span className="font-medium">Rs{parseFloat(order.shipping_cost).toFixed(2)}</span>
+                  </div>
+                  <div className="border-t pt-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-semibold">Total:</span>
+                      <span className="text-lg font-bold text-green-600">Rs{parseFloat(order.total).toFixed(2)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -795,7 +850,13 @@ const Orders = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Orders Management</h1>
-       
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+        >
+          <Plus size={20} />
+          New Order
+        </button>
       </div>
 
       {error && (
@@ -805,9 +866,6 @@ const Orders = () => {
           <small>Check the browser console for more details.</small>
         </div>
       )}
-
-
-      
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -883,8 +941,9 @@ const Orders = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Number</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items Ordered</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -901,14 +960,59 @@ const Orders = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        
-                        <div className="text-sm text-gray-500">{order.shipping_address} {order.shipping_city}  </div>
+                        <div className="text-sm font-medium text-gray-900">{order.customer_first_name} {order.customer_last_name}</div>
+                        <div className="text-sm text-gray-500">{order.customer_email}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {order.items && order.items.length > 0 ? (
+                          <div className="space-y-1 max-w-xs">
+                            {order.items.slice(0, 2).map((item, index) => (
+                              <div key={index} className="flex items-center gap-2 bg-gray-50 px-2 py-1 rounded">
+                                <ShoppingCart size={12} className="text-gray-400" />
+                                <span className="font-medium text-xs truncate">{item.product_name || item.name}</span>
+                                <span className="text-gray-500 text-xs">×{item.quantity}</span>
+                                <span className="text-green-600 font-medium text-xs">Rs{parseFloat(item.price).toFixed(2)}</span>
+                              </div>
+                            ))}
+                            {order.items.length > 2 && (
+                              <div className="text-xs text-gray-500 text-center bg-gray-100 px-2 py-1 rounded">
+                                +{order.items.length - 2} more item{order.items.length - 2 !== 1 ? 's' : ''}
+                              </div>
+                            )}
+                            <div className="text-xs text-gray-400 mt-1">
+                              Total: {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-gray-400 italic">
+                            <ShoppingCart size={14} />
+                            <span>No items loaded</span>
+                            <button
+                              onClick={async () => {
+                                const orderWithItems = await fetchOrderWithItems(order.id);
+                                if (orderWithItems && orderWithItems.items) {
+                                  // Update this specific order in the orders array
+                                  setOrders(prevOrders => 
+                                    prevOrders.map(o => 
+                                      o.id === order.id ? orderWithItems : o
+                                    )
+                                  );
+                                }
+                              }}
+                              className="text-blue-500 hover:text-blue-700 text-xs underline"
+                            >
+                              Load items
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{order.customer_first_name} {order.customer_last_name}</div>
-                        <div className="text-sm text-gray-500">{order.customer_email}</div>
+                        <div className="text-sm text-gray-500">{order.shipping_address}</div>
+                        <div className="text-sm text-gray-500">{order.shipping_city}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -926,30 +1030,42 @@ const Orders = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
                         <button
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setShowOrderDetails(true);
+                          onClick={async () => {
+                            const orderWithItems = await fetchOrderWithItems(order.id);
+                            if (orderWithItems) {
+                              setSelectedOrder(orderWithItems);
+                              setShowOrderDetails(true);
+                            }
                           }}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-blue-600 hover:text-blue-900 p-1"
+                          title="View Details"
                         >
                           <Eye size={16} />
                         </button>
-                        {/* <button
-                          onClick={() => setEditingOrder(order)}
-                          className="text-green-600 hover:text-green-900"
+                        <button
+                          onClick={async () => {
+                            const orderWithItems = await fetchOrderWithItems(order.id);
+                            if (orderWithItems) {
+                              setEditingOrder(orderWithItems);
+                            }
+                          }}
+                          className="text-green-600 hover:text-green-900 p-1"
+                          title="Edit Order"
                         >
                           <Edit size={16} />
-                        </button> */}
+                        </button>
                         <button
                           onClick={() => deleteOrder(order.id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="text-red-600 hover:text-red-900 p-1"
+                          title="Delete Order"
                         >
                           <Trash2 size={16} />
                         </button>
                         <select
                           value={order.status}
                           onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                          className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          title="Quick Status Change"
                         >
                           {statuses.map(status => (
                             <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>

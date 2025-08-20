@@ -64,7 +64,7 @@ const Profile = () => {
     return null;
   };
 
-  // FIXED: Fetch user profile from database with correct API endpoint
+  
   const fetchUserProfile = async () => {
     const userId = getUserId();
     
@@ -78,17 +78,17 @@ const Profile = () => {
       setInitialLoading(true);
       console.log('Fetching user profile for ID:', userId);
       
-      // FIXED: Correct API endpoint path
+      
       const response = await fetch(`http://localhost:4000/api/users/${userId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          // Add JWT token if available
+          
           ...(localStorage.getItem('token') && {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           })
         },
-        credentials: 'include' // Include cookies for session-based auth
+        credentials: 'include' 
       });
 
       console.log('Fetch response status:', response.status);
@@ -118,7 +118,7 @@ const Profile = () => {
       const responseData = await response.json();
       console.log('Fetched fresh user data from API:', responseData);
       
-      // FIXED: Handle the response structure correctly
+      
       if (responseData.success && responseData.data) {
         setEditedUser(responseData.data);
         setMessage({ type: 'success', text: 'Profile loaded successfully!' });
@@ -262,7 +262,7 @@ const Profile = () => {
     return true;
   };
 
-  // FIXED: Update user profile with correct API endpoint and error handling
+  //  user profile with API endpoint and error handling
   const handleSave = async () => {
     const userId = getUserId();
     
@@ -290,18 +290,18 @@ const Profile = () => {
       console.log('Updating user profile with data:', updateData);
       console.log('User ID:', userId);
 
-      // FIXED: Correct API endpoint URL for profile update
+      
       const response = await fetch(`http://localhost:4000/api/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          // Add JWT token if available
+          
           ...(localStorage.getItem('token') && {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           })
         },
         credentials: 'include',
-        body: JSON.stringify(updateData) // FIXED: Send profile data, not password data
+        body: JSON.stringify(updateData) 
       });
 
       console.log('Update response status:', response.status);
@@ -342,7 +342,7 @@ const Profile = () => {
       const responseData = await response.json();
       console.log('Profile updated successfully:', responseData);
 
-      // FIXED: Handle response structure correctly
+     
       if (responseData.success && responseData.data) {
         setEditedUser(responseData.data);
         setEditMode(false);
@@ -364,7 +364,7 @@ const Profile = () => {
     }
   };
 
-  // FIXED: Update user password with correct API endpoint
+  
   const handlePasswordUpdate = async () => {
     const userId = getUserId();
     
@@ -381,12 +381,12 @@ const Profile = () => {
 
       console.log('Updating user password for ID:', userId);
 
-      // FIXED: Correct API endpoint path for password update
+      
       const response = await fetch(`http://localhost:4000/api/users/${userId}/password`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          // Add JWT token if available
+          
           ...(localStorage.getItem('token') && {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           })
