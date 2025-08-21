@@ -37,31 +37,39 @@ class ProductController {
 
 
   static async getAndUpdateStock(req, res) {
-    try {
-      const { id } = req.params;   // product id from URL
-      const { newStock } = req.body; // new stock value from request body
+  try {
+    const productId = parseInt(req.params.id);
+    const { newStock } = req.body;
 
-      // 1. Check if product exists
-      const [rows] = await pool.query("SELECT * FROM product WHERE id = ?", [id]);
-      if (rows.length === 0) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-
-      // 2. Update stock
-      await pool.query(
-        "UPDATE product SET stock = ?, updated_at = NOW() WHERE id = ?",
-        [newStock, id]
-      );
-
-      // 3. Return updated product
-      const [updatedProduct] = await pool.query("SELECT * FROM product WHERE id = ?", [id]);
-      return res.status(200).json(updatedProduct[0]);
-
-    } catch (error) {
-      console.error("Error in getAndUpdateStock:", error);
-      return res.status(500).json({ message: "Server error", error: error.message });
+    // Validate input
+    if (isNaN(productId)) {
+      return errorResponse(res, "Invalid product ID", null, 400);
     }
+
+    if (newStock === undefined || newStock < 0) {
+      return errorResponse(res, "Valid stock value is required", null, 400);
+    }
+
+    // Check if product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      return errorResponse(res, "Product not found", null, 404);
+    }
+
+    // Update stock using the static method
+    const updatedProduct = await Product.updateStock(productId, parseInt(newStock));
+    
+    if (!updatedProduct) {
+      return errorResponse(res, "Failed to update stock", null, 500);
+    }
+
+    return successResponse(res, "Stock updated successfully", updatedProduct);
+
+  } catch (error) {
+    console.error("Error in getAndUpdateStock:", error);
+    return errorResponse(res, "Error updating stock", error.message, 500);
   }
+}
 
   // Get product by name
   static async getProductByName(req, res) {

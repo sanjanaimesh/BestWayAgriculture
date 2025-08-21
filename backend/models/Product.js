@@ -43,20 +43,20 @@ class Product {
     }
   }
 
-  //select product
-  static async findById(id) {
-    const [rows] = await pool.query("SELECT * FROM products WHERE id = ?", [id]);
-    return rows[0];
-  }
-//stock update
+  // Update stock - static method
   static async updateStock(id, newStock) {
-    await pool.query(
-      "UPDATE products SET stock = ?, updated_at = NOW() WHERE id = ?",
-      [newStock, id]
-    );
-    const [rows] = await pool.query("SELECT * FROM products WHERE id = ?", [id]);
-    return rows[0];
+    try {
+      await pool.execute(
+        "UPDATE products SET stock = ?, updated_at = NOW() WHERE id = ?",
+        [newStock, id]
+      );
+      const [rows] = await pool.execute("SELECT * FROM products WHERE id = ?", [id]);
+      return rows.length > 0 ? new Product(rows[0]) : null;
+    } catch (error) {
+      throw new Error(`Error updating stock: ${error.message}`);
+    }
   }
+
   // Get products by category
   static async findByCategory(category) {
     try {
@@ -207,7 +207,7 @@ class Product {
     }
   }
 
-  // Update stock
+  // Update stock - instance method
   async updateStock(quantity) {
     try {
       if (!this.id) {
