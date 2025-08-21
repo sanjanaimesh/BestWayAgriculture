@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, UserPlus, Edit, Trash2, Eye, Mail, Phone, MapPin, Calendar, User, AlertTriangle, Check, X } from 'lucide-react';
+import { Search, Filter, UserPlus, Edit, Trash2, Eye, Mail, Phone, MapPin, Calendar, User, AlertTriangle, Check, X, Shield, ShieldCheck } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:4000';
 
@@ -58,6 +58,7 @@ const AdminUserManagement = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserDetails, setShowUserDetails] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
+  const [showRoleConfirm, setShowRoleConfirm] = useState<{ userId: number; newRole: 'admin' | 'user' } | null>(null);
 
   const [formData, setFormData] = useState<UserFormData>({
     firstName: '',
@@ -137,32 +138,10 @@ const AdminUserManagement = () => {
   };
 
   // Load user statistics
-  const loadUserStats = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/users/stats`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setStats(data.data.overview ? { ...data.data.overview, provinceDistribution: data.data.provinceDistribution || [] } : null);
-      }
-    } catch (error) {
-      console.error('Load stats error:', error);
-    }
-  };
 
   useEffect(() => {
     loadUsers();
   }, [currentPage, roleFilter, searchTerm]);
-
-  useEffect(() => {
-    loadUserStats();
-  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -186,7 +165,7 @@ const AdminUserManagement = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) return 'Invalid email format';
     
-    // Mobile validation for Sri Lankan numbers
+    // Mobile validation 
     const mobileRegex = /^(\+94|0)?[7-9]\d{8}$/;
     if (!mobileRegex.test(formData.mobile)) return 'Invalid mobile number format';
     
@@ -211,7 +190,7 @@ const AdminUserManagement = () => {
       let url, method, requestData;
 
       if (editingUser) {
-        // Update existing user - use the correct route
+        // Update existing user
         url = `${API_BASE_URL}/api/users/profile/${editingUser.id}`;
         method = 'PUT';
         requestData = {
@@ -256,7 +235,6 @@ const AdminUserManagement = () => {
         setEditingUser(null);
         resetForm();
         loadUsers();
-        loadUserStats();
       } else {
         setError(data.message || 'Operation failed');
       }
@@ -318,7 +296,6 @@ const AdminUserManagement = () => {
       if (response.ok && data.success) {
         setSuccess('User deleted successfully!');
         loadUsers();
-        loadUserStats();
       } else {
         setError(data.message || 'Failed to delete user');
       }
@@ -329,6 +306,48 @@ const AdminUserManagement = () => {
       setLoading(false);
       setShowDeleteConfirm(null);
     }
+  };
+
+  // Function to handle role updates
+  const handleRoleUpdate = async (userId: number, newRole: 'admin' | 'user') => {
+    setLoading(true);
+    setError('');
+
+    try {
+      console.log('Updating user role:', { userId, newRole });
+      
+      const response = await fetch(`${API_BASE_URL}/api/users/${userId}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          role: newRole
+        }),
+      });
+
+      const data = await response.json();
+      console.log('Role update response:', data);
+
+      if (response.ok && data.success) {
+        setSuccess(`User role updated to ${newRole} successfully!`);
+        loadUsers();
+      } else {
+        setSuccess(data.message || 'Failed to update user role');
+      }
+    } catch (error) {
+      console.error('Role update error:', error);
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+      setShowRoleConfirm(null);
+    }
+  };
+
+  // Function to initiate role change with confirmation
+  const initiateRoleChange = (userId: number, currentRole: 'admin' | 'user') => {
+    const newRole = currentRole === 'admin' ? 'user' : 'admin';
+    setShowRoleConfirm({ userId, newRole });
   };
 
   const filteredUsers = users.filter(user => {
@@ -451,7 +470,7 @@ const AdminUserManagement = () => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
-            <p className="text-gray-600 mt-1">Manage users, roles, and permissions</p>
+            <p className="text-gray-600 mt-1">Manage users and roles,  </p>
           </div>
           <button
             onClick={() => {
@@ -468,27 +487,7 @@ const AdminUserManagement = () => {
           </button>
         </div>
 
-        {/* Stats Cards */}
-        {stats && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
-              <div className="text-sm text-blue-600 font-medium uppercase tracking-wide">Total Users</div>
-              <div className="text-3xl font-bold text-gray-800 mt-2">{stats.totalUsers}</div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
-              <div className="text-sm text-green-600 font-medium uppercase tracking-wide">Active Users</div>
-              <div className="text-3xl font-bold text-gray-800 mt-2">{stats.activeUsers}</div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-red-500">
-              <div className="text-sm text-red-600 font-medium uppercase tracking-wide">Admins</div>
-              <div className="text-3xl font-bold text-gray-800 mt-2">{stats.totalAdmins}</div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500">
-              <div className="text-sm text-purple-600 font-medium uppercase tracking-wide">New Today</div>
-              <div className="text-3xl font-bold text-gray-800 mt-2">{stats.todayRegistrations}</div>
-            </div>
-          </div>
-        )}
+        
 
         {/* Alerts */}
         {error && (
@@ -516,7 +515,7 @@ const AdminUserManagement = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <input
                 type="text"
-                placeholder="Search users..."
+                placeholder="Search users.."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -557,7 +556,7 @@ const AdminUserManagement = () => {
           </div>
         </div>
 
-        {/* User Form Modal */}
+        {/* Edit User Form Modal */}
         {showUserForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -654,18 +653,7 @@ const AdminUserManagement = () => {
                     />
                   </div>
                 )}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                  <select
-                    name="role"
-                    value={formData.role}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
+                
                 <div className="flex gap-3 pt-4">
                   <button
                     type="submit"
@@ -701,7 +689,6 @@ const AdminUserManagement = () => {
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
@@ -742,19 +729,17 @@ const AdminUserManagement = () => {
                         <div className="text-sm text-gray-500">{user.province}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          user.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
-                        }`}>
+                        <button
+                          onClick={() => initiateRoleChange(user.id, user.role)}
+                          className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full hover:opacity-80 transition-opacity cursor-pointer ${
+                            user.role === 'admin' ? 'bg-red-100 text-red-800 hover:bg-red-200' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                          }`}
+                          title={`Click to change to ${user.role === 'admin' ? 'User' : 'Admin'}`}
+                        >
                           {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                        </span>
+                        </button>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          user.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {user.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
+                     
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {new Date(user.createdAt).toLocaleDateString()}
                       </td>
@@ -776,6 +761,13 @@ const AdminUserManagement = () => {
                             title="Edit User"
                           >
                             <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => initiateRoleChange(user.id, user.role)}
+                            className="text-orange-600 hover:text-orange-900 p-1 rounded hover:bg-orange-100 transition-colors"
+                            title={`Change to ${user.role === 'admin' ? 'User' : 'Admin'}`}
+                          >
+                            {user.role === 'admin' ? <Shield size={16} /> : <ShieldCheck size={16} />}
                           </button>
                           <button
                             onClick={() => setShowDeleteConfirm(user.id)}
@@ -865,6 +857,37 @@ const AdminUserManagement = () => {
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(null)}
+                  className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Role Confirmation Modal */}
+        {showRoleConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <div className="flex items-center mb-4">
+                <Shield className="text-orange-500 mr-3" size={24} />
+                <h3 className="text-lg font-semibold text-gray-800">Confirm Role Change</h3>
+              </div>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to change this user's role to <strong>{showRoleConfirm.newRole}</strong>? 
+                This will affect their permissions and access level.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleRoleUpdate(showRoleConfirm.userId, showRoleConfirm.newRole)}
+                  disabled={loading}
+                  className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 disabled:bg-orange-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? 'Updating...' : 'Update Role'}
+                </button>
+                <button
+                  onClick={() => setShowRoleConfirm(null)}
                   className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors"
                 >
                   Cancel

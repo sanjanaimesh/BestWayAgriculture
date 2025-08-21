@@ -618,13 +618,6 @@ const Agent = () => {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleToggleStatus(agent.id, agent.is_active)}
-                    className={`p-1 ${agent.is_active ? 'text-green-600 hover:text-green-800' : 'text-gray-400 hover:text-gray-600'}`}
-                    title={agent.is_active ? 'Deactivate agent' : 'Activate agent'}
-                  >
-                    {agent.is_active ? <ToggleRight className="h-5 w-5" /> : <ToggleLeft className="h-5 w-5" />}
-                  </button>
-                  <button
                     onClick={() => handleEditAgent(agent)}
                     className="text-blue-600 hover:text-blue-800 p-1"
                   >
@@ -676,30 +669,7 @@ const Agent = () => {
           </div>
         )}
 
-        {/* Stats Summary */}
-        {/* {statistics && (
-          <div className="mt-8 bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Summary</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{statistics.total}</div>
-                <div className="text-sm text-gray-600">Total Agents</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{statistics.specialties}</div>
-                <div className="text-sm text-gray-600">Specialties</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">{statistics.avg_rating}</div>
-                <div className="text-sm text-gray-600">Avg. Rating</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">{statistics.top_rated}</div>
-                <div className="text-sm text-gray-600">Top Rated</div>
-              </div>
-            </div>
-          </div>
-        )} */}
+        
       </div>
     </div>
   );

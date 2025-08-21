@@ -377,6 +377,22 @@ class User {
     }
   }
 
+   // Update user role by ID
+  static async updateRole(id, role) {
+    try {
+      // Update role
+      await pool.query("UPDATE users SET role = ?, updatedAt = NOW() WHERE id = ?", [role, id]);
+
+      // Return updated user
+      const [updatedUser] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
+      return updatedUser[0];
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  
+
   // Authenticate user
   static async authenticate(identifier, password) {
     try {

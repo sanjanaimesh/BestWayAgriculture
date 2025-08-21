@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Phone, Mail, MessageCircle, Star, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
+import { Phone, Mail, MessageCircle, Star, Calendar, CheckCircle, AlertCircle, X } from 'lucide-react';
 
 const AgentContact = () => {
   const [filters, setFilters] = useState({
@@ -12,6 +12,7 @@ const AgentContact = () => {
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', null
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [contactForm, setContactForm] = useState({
     name: '',
     email: '',
@@ -51,51 +52,31 @@ const AgentContact = () => {
       setLoading(false);
     }
   };
+  
   useEffect(() => {
     fetchAgents();
   }, [filters]);
-  // const agents = [
-  //   {
-  //     id: 1,
-  //     name: 'Dr. Sarah Johnson',
-  //     specialty: 'Vegetable Crops',
-  //     experience: '15 years',
-  //     rating: 4.9,
-  //     phone: '+1 (555) 123-4567',
-  //     email: 'sarah.johnson@bestwayagriculture.com',
-  //     image: 'https://images.pexels.com/photos/5327580/pexels-photo-5327580.jpeg?auto=compress&cs=tinysrgb&w=400',
-  //     bio: 'Specialized in organic vegetable farming with expertise in soil health and sustainable practices.'
-  //   },
-  //   {
-  //     id: 2,
-  //     name: 'Michael Chen',
-  //     specialty: 'Grain Production',
-  //     experience: '12 years',
-  //     rating: 4.8,
-  //     phone: '+1 (555) 987-6543',
-  //     email: 'michael.chen@bestwayagriculture.com',
-  //     image: 'https://images.pexels.com/photos/5327921/pexels-photo-5327921.jpeg?auto=compress&cs=tinysrgb&w=400',
-  //     bio: 'Expert in large-scale grain production with focus on yield optimization and modern farming techniques.'
-  //   },
-  //   {
-  //     id: 3,
-  //     name: 'Dr. Emily Rodriguez',
-  //     specialty: 'Crop Disease Management',
-  //     experience: '18 years',
-  //     rating: 4.9,
-  //     phone: '+1 (555) 456-7890',
-  //     email: 'emily.rodriguez@bestwayagriculture.com',
-  //     image: 'https://images.pexels.com/photos/5327647/pexels-photo-5327647.jpeg?auto=compress&cs=tinysrgb&w=400',
-  //     bio: 'Plant pathologist specializing in integrated pest management and disease prevention strategies.'
-  //   }
-  // ];
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const closeSuccessModal = () => {
+    setShowSuccessModal(false);
+    setSubmitStatus(null);
+  };
+
+  const handleSubmit = async () => {
     setLoading(true);
     setSubmitStatus(null);
 
+    // Basic validation
+    if (!contactForm.name || !contactForm.email || !contactForm.message) {
+      setSubmitStatus('error');
+      setLoading(false);
+      return;
+    }
+
     try {
+      // Add minimum loading time for better UX (1.5 seconds)
+      const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1500));
+
       // Prepare data for API
       const selectedAgentData = selectedAgent ? agents.find(a => a.id === selectedAgent) : null;
       
@@ -109,18 +90,24 @@ const AgentContact = () => {
         selectedAgentName: selectedAgentData?.name || null
       };
 
-      const response = await fetch(`${API_BASE_URL}/api/contacts`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(submitData)
-      });
+      // Execute API call and minimum loading time in parallel
+      const [response] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/contacts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(submitData)
+        }),
+        minLoadingTime
+      ]);
 
       const result = await response.json();
 
       if (response.ok && result.success) {
         setSubmitStatus('success');
+        setShowSuccessModal(true);
+        
         // Reset form
         setContactForm({
           name: '',
@@ -131,10 +118,6 @@ const AgentContact = () => {
         });
         setSelectedAgent(null);
         
-        // Auto-hide success message after 5 seconds
-        setTimeout(() => {
-          setSubmitStatus(null);
-        }, 5000);
       } else {
         setSubmitStatus('error');
         console.error('API Error:', result.message);
@@ -142,6 +125,9 @@ const AgentContact = () => {
     } catch (error) {
       console.error('Network Error:', error);
       setSubmitStatus('error');
+      
+      // Still wait for minimum time even on error
+      await new Promise(resolve => setTimeout(resolve, 1000));
     } finally {
       setLoading(false);
     }
@@ -166,21 +152,7 @@ const AgentContact = () => {
           </p>
         </div>
 
-        {/* Success/Error Messages */}
-        {submitStatus === 'success' && (
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center">
-              <CheckCircle className="h-6 w-6 text-green-600 mr-3" />
-              <div>
-                <h3 className="text-green-800 font-semibold">Request Submitted Successfully!</h3>
-                <p className="text-green-700 text-sm mt-1">
-                  Thank you for contacting us. An expert will reach out to you within 24 hours.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
+        {/* Error Messages */}
         {submitStatus === 'error' && (
           <div className="max-w-2xl mx-auto mb-8">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center">
@@ -207,10 +179,6 @@ const AgentContact = () => {
                 />
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{agent.name}</h3>
                 <p className="text-green-600 font-medium text-sm sm:text-base">{agent.specialty}</p>
-                {/* <div className="flex items-center justify-center mt-2">
-                  <Star className="h-5 w-5 text-yellow-400 fill-current" />
-                  <span className="ml-1 text-sm text-gray-600">{agent.rating} • {agent.experience}</span>
-                </div> */}
               </div>
               <p className="text-gray-600 text-sm mb-4">{agent.bio}</p>
               <div className="space-y-2">
@@ -270,7 +238,7 @@ const AgentContact = () => {
               </p>
             )}
           </div>
-          <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
+          <div className="max-w-2xl mx-auto">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -352,7 +320,7 @@ const AgentContact = () => {
               />
             </div>
             <button
-              type="submit"
+              onClick={handleSubmit}
               disabled={loading}
               className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors flex items-center justify-center text-base"
             >
@@ -368,9 +336,68 @@ const AgentContact = () => {
                 </>
               )}
             </button>
-          </form>
+          </div>
         </div>
       </div>
+
+      {/* Success Message Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full shadow-xl">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <CheckCircle className="h-8 w-8 text-green-500 mr-3" />
+                  <h3 className="text-xl font-bold text-gray-900">Request Submitted Successfully!</h3>
+                </div>
+                <button
+                  onClick={closeSuccessModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              
+              <div className="text-gray-600 mb-4">
+                {selectedAgent ? (
+                  <>
+                    <p className="mb-2">Your expert contact request has been submitted successfully!</p>
+                    <p className="text-sm">
+                      <strong>{agents.find(a => a.id === selectedAgent)?.name}</strong> will contact you within 24 hours.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="mb-2">Your consultation request has been submitted successfully!</p>
+                    <p className="text-sm">
+                      Our expert team will contact you within 24 hours with the best agricultural specialist for your needs.
+                    </p>
+                  </>
+                )}
+              </div>
+
+              
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h4 className="font-semibold text-blue-900 mb-2">What happens next?</h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• You'll receive email or phone call</li>
+                  <li>• You'll be contacted within 24 hours</li>
+                  <li>• An expert will review your farming needs</li>
+                  <li>• Get personalized agricultural guidance</li>
+                </ul>
+              </div>
+
+              <button
+                onClick={closeSuccessModal}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

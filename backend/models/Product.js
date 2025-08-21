@@ -43,6 +43,20 @@ class Product {
     }
   }
 
+  // Update stock - static method
+  static async updateStock(id, newStock) {
+    try {
+      await pool.execute(
+        "UPDATE products SET stock = ?, updated_at = NOW() WHERE id = ?",
+        [newStock, id]
+      );
+      const [rows] = await pool.execute("SELECT * FROM products WHERE id = ?", [id]);
+      return rows.length > 0 ? new Product(rows[0]) : null;
+    } catch (error) {
+      throw new Error(`Error updating stock: ${error.message}`);
+    }
+  }
+
   // Get products by category
   static async findByCategory(category) {
     try {
@@ -94,13 +108,13 @@ class Product {
           'INSERT INTO products (name, price, image, category, description, stock) VALUES (?, ?, ?, ?, ?, ?)',
           [this.name, this.price, this.image, this.category, this.description, this.stock]
         );
-        
+
         this.id = result.insertId;
-        
+
         // Fetch the complete product data
         const savedProduct = await Product.findById(this.id);
         Object.assign(this, savedProduct);
-        
+
         return this;
       }
     } catch (error) {
@@ -148,7 +162,7 @@ class Product {
       }
 
       values.push(this.id);
-      
+
       await pool.execute(
         `UPDATE products SET ${updates.join(', ')} WHERE id = ?`,
         values
@@ -185,7 +199,7 @@ class Product {
       if (!product) {
         return null;
       }
-      
+
       await pool.execute('DELETE FROM products WHERE id = ?', [id]);
       return product;
     } catch (error) {
@@ -193,7 +207,7 @@ class Product {
     }
   }
 
-  // Update stock
+  // Update stock - instance method
   async updateStock(quantity) {
     try {
       if (!this.id) {

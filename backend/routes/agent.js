@@ -71,25 +71,25 @@ const logRequest = (req, res, next) => {
 router.use(logRequest);
 
 
-// GET /api/agents/statistics - Get agent statistics (must be before /:id route)
+// GET /api/agents/statistics - Get agent statistics 
 router.get('/statistics', AgentController.getStatistics);
 
-// GET /api/agents/specialties - Get all unique specialties
+// Get all unique specialties
 router.get('/specialties', AgentController.getSpecialties);
 
-// GET /api/agents - Get all agents with optional filters
+//  Get all agents with optional filters
 router.get('/', AgentController.getAllAgents);
 
-// GET /api/agents/:id - Get single agent by ID
+// Get single agent by ID
 router.get('/:id', validateAgentId, AgentController.getAgentById);
 
-// POST /api/agents - Create new agent
+// Create new agent
 router.post('/', validateAgentData, AgentController.createAgent);
 
-// PUT /api/agents/:id - Update existing agent
+// Update existing agent
 router.put('/:id', validateAgentId, validateAgentData, AgentController.updateAgent);
 
-// PATCH /api/agents/:id - Partial update of agent (for fields that don't require full validation)
+//  Partial update of agent 
 router.patch('/:id', validateAgentId, (req, res, next) => {
   
   const errors = [];
@@ -123,10 +123,10 @@ router.patch('/:id', validateAgentId, (req, res, next) => {
 // PATCH /api/agents/:id/toggle - Toggle agent active status
 router.patch('/:id/toggle', validateAgentId, AgentController.toggleAgentStatus);
 
-// POST /api/agents/:id/restore - Restore soft deleted agent
+// Restore soft deleted agent
 router.post('/:id/restore', validateAgentId, AgentController.restoreAgent);
 
-// DELETE /api/agents/:id - Delete agent 
+// Delete agent 
 router.delete('/:id', validateAgentId, AgentController.deleteAgent);
 
 // Health check route specific to agents

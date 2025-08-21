@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import Checkout from './Checkout';
+import { useAuth } from '../components/Auth/Providers/AuthProvider';
 
 interface CartProps {
   isOpen: boolean;
@@ -10,11 +11,18 @@ interface CartProps {
 
 const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
   const { cartItems, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
+  const { login, isAuthenticated, userRole, user, logout } = useAuth();
   const [isCheckoutOpen, setIsCheckoutOpen] = React.useState(false);
 
-  const handleProceedToCheckout = () => {
+  function handleProceedToCheckout() {
+    if (!isAuthenticated) {
+      
+      alert('Please log in to proceed with checkout');
+      
+      return;
+    }
     setIsCheckoutOpen(true);
-  };
+  }
 
   const handleClearCart = () => {
     if (window.confirm('Are you sure you want to clear your cart?')) {
@@ -115,20 +123,34 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm">
                     <span>Items ({cartItems.reduce((sum, item) => sum + item.quantity, 0)}):</span>
-                    <span>Rs {getCartTotal().toLocaleString()}</span>
+                    <span>LKR {getCartTotal().toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center border-t pt-2">
                     <span className="text-base sm:text-lg font-semibold">Total:</span>
                     <span className="text-xl sm:text-2xl font-bold text-green-600">
-                      Rs {getCartTotal().toLocaleString()}
+                      LKR {getCartTotal().toLocaleString()}
                     </span>
                   </div>
                 </div>
+                
+                {/* Show user status */}
+                {!isAuthenticated && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+                    <p className="text-yellow-800">
+                      <span className="font-medium">Sign in required:</span> Please log in to complete your purchase.
+                    </p>
+                  </div>
+                )}
+                
                 <button 
                   onClick={handleProceedToCheckout}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 sm:py-4 px-4 rounded-lg transition-colors text-base touch-manipulation"
+                  className={`w-full font-semibold py-3 sm:py-4 px-4 rounded-lg transition-colors text-base touch-manipulation ${
+                    isAuthenticated 
+                      ? 'bg-green-600 hover:bg-green-700 text-white' 
+                      : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
+                  }`}
                 >
-                  Proceed to Checkout
+                  {isAuthenticated ? 'Proceed to Checkout' : 'Sign In to Checkout'}
                 </button>
               </div>
             )}
@@ -145,4 +167,3 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
 };
 
 export default Cart;
-

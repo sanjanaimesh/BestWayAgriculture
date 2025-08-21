@@ -78,7 +78,7 @@ const Products = () => {
         setLoading(true);
         setError('');
         try {
-            const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+            const response = await fetch(`http://localhost:4000/products/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -232,7 +232,36 @@ const Products = () => {
                     Loading...
                 </div>
             )}
-
+            {/* Stats Cards */}
+            <div className="grid grid-cols-3 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="flex items-center gap-3">
+                        <Package size={24} className="text-blue-600" />
+                        <div>
+                            <div className="text-sm text-blue-600 font-medium">Total Products</div>
+                            <div className="text-2xl font-bold text-blue-800">{products.length}</div>
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="flex items-center gap-3">
+                        <Package size={24} className="text-green-600" />
+                        <div>
+                            <div className="text-sm text-green-600 font-medium">Total Stock</div>
+                            <div className="text-2xl font-bold text-green-800">{products.reduce((sum, p) => sum + p.stock, 0)}</div>
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg">
+                    <div className="flex items-center gap-3">
+                        <Filter size={24} className="text-purple-600" />
+                        <div>
+                            <div className="text-sm text-purple-600 font-medium">Categories</div>
+                            <div className="text-2xl font-bold text-purple-800">{new Set(products.map(p => p.category)).size}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             {/* Search and Filter */}
             <div className="flex gap-4">
                 <div className="relative flex-1">
@@ -445,36 +474,7 @@ const Products = () => {
                 )}
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-3 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="flex items-center gap-3">
-                        <Package size={24} className="text-blue-600" />
-                        <div>
-                            <div className="text-sm text-blue-600 font-medium">Total Products</div>
-                            <div className="text-2xl font-bold text-blue-800">{products.length}</div>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="flex items-center gap-3">
-                        <Package size={24} className="text-green-600" />
-                        <div>
-                            <div className="text-sm text-green-600 font-medium">Total Stock</div>
-                            <div className="text-2xl font-bold text-green-800">{products.reduce((sum, p) => sum + p.stock, 0)}</div>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                    <div className="flex items-center gap-3">
-                        <Filter size={24} className="text-purple-600" />
-                        <div>
-                            <div className="text-sm text-purple-600 font-medium">Categories</div>
-                            <div className="text-2xl font-bold text-purple-800">{new Set(products.map(p => p.category)).size}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            
         </div>
     );
 };

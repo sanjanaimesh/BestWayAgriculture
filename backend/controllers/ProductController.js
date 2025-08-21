@@ -35,6 +35,42 @@ class ProductController {
     }
   }
 
+
+  static async getAndUpdateStock(req, res) {
+  try {
+    const productId = parseInt(req.params.id);
+    const { newStock } = req.body;
+
+    // Validate input
+    if (isNaN(productId)) {
+      return errorResponse(res, "Invalid product ID", null, 400);
+    }
+
+    if (newStock === undefined || newStock < 0) {
+      return errorResponse(res, "Valid stock value is required", null, 400);
+    }
+
+    // Check if product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      return errorResponse(res, "Product not found", null, 404);
+    }
+
+    // Update stock using the static method
+    const updatedProduct = await Product.updateStock(productId, parseInt(newStock));
+    
+    if (!updatedProduct) {
+      return errorResponse(res, "Failed to update stock", null, 500);
+    }
+
+    return successResponse(res, "Stock updated successfully", updatedProduct);
+
+  } catch (error) {
+    console.error("Error in getAndUpdateStock:", error);
+    return errorResponse(res, "Error updating stock", error.message, 500);
+  }
+}
+
   // Get product by name
   static async getProductByName(req, res) {
     try {

@@ -1,4 +1,4 @@
-// Updated database config import - use the pool directly
+
 const { pool } = require('../config/database');
 
 class Agent {

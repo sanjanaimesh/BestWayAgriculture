@@ -73,7 +73,7 @@ class UserController {
     }
   }
 
-  // Get user profile
+  // Get user profile 
   static async getProfile(req, res) {
     try {
       const userId = req.params.id;
@@ -96,12 +96,11 @@ class UserController {
         });
       }
 
+      // Return user data directly in the expected format
       res.json({
         success: true,
         message: 'User profile retrieved successfully',
-        data: {
-          user: user.toJSON()
-        }
+        data: user.toJSON()
       });
     } catch (error) {
       console.error('Get profile error:', error);
@@ -163,6 +162,9 @@ class UserController {
       const userId = req.params.id;
       const updateData = req.body;
 
+      console.log('Update request - User ID:', userId);
+      console.log('Update request - Body:', updateData);
+
       if (!userId) {
         return res.status(400).json({
           success: false,
@@ -170,16 +172,17 @@ class UserController {
         });
       }
 
-      console.log('Updating user profile:', userId, updateData);
-
+      // Remove password from update data 
       delete updateData.password;
 
-      
+      // Trim string values
       Object.keys(updateData).forEach(key => {
         if (typeof updateData[key] === 'string') {
           updateData[key] = updateData[key].trim();
         }
       });
+
+      console.log('Updating user profile for ID:', userId, 'with data:', updateData);
 
       const updatedUser = await User.update(userId, updateData);
 
@@ -190,24 +193,37 @@ class UserController {
         });
       }
 
+      //Return user data in the expected format for frontend
       res.json({
         success: true,
         message: 'Profile updated successfully',
-        data: {
-          user: updatedUser.toJSON()
-        }
+        data: updatedUser.toJSON()
       });
     } catch (error) {
       console.error('Update profile error:', error);
-      res.status(400).json({
-        success: false,
-        message: error.message || 'Failed to update profile',
-        error: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      });
+      
+      // Handle specific error types
+      if (error.message.includes('already exists')) {
+        res.status(409).json({
+          success: false,
+          message: error.message
+        });
+      } else if (error.message.includes('Invalid')) {
+        res.status(400).json({
+          success: false,
+          message: error.message
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: error.message || 'Failed to update profile',
+          error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+      }
     }
   }
 
-  // Update password
+  // Update password 
   static async updatePassword(req, res) {
     try {
       const userId = req.params.id;
@@ -244,10 +260,24 @@ class UserController {
       });
     } catch (error) {
       console.error('Update password error:', error);
-      res.status(400).json({
-        success: false,
-        message: error.message || 'Failed to update password'
-      });
+      
+      // Handle specific error types
+      if (error.message.includes('Current password is incorrect')) {
+        res.status(401).json({
+          success: false,
+          message: error.message
+        });
+      } else if (error.message.includes('User not found')) {
+        res.status(404).json({
+          success: false,
+          message: error.message
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: error.message || 'Failed to update password'
+        });
+      }
     }
   }
 
@@ -385,6 +415,29 @@ class UserController {
       });
     }
   }
+
+static updateUserRole = async (req, res) => {
+    try {
+      const { id } = req.params;  
+      const { role } = req.body;  
+      // Check if user exists
+      const user = await User.findById(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Update role
+      const updatedUser = await User.updateRole(id, role);
+
+      return res.status(200).json({
+        message: "Role updated successfully",
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Error in updateUserRole:", error);
+      return res.status(500).json({ message: "Server error", error: error.message });
+    }
+  };
 
   // Check email availability
   static async checkEmail(req, res) {
