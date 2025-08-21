@@ -436,10 +436,6 @@ const Messages = () => {
                 <StatusIcon size={14} className="mr-1" />
                 {message.status.charAt(0).toUpperCase() + message.status.slice(1)}
               </span>
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${priorityColors[message.priority]}`}>
-                <PriorityIcon size={14} className="mr-1" />
-                {message.priority.charAt(0).toUpperCase() + message.priority.slice(1)} Priority
-              </span>
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${categoryColors[message.category]}`}>
                 {message.category.charAt(0).toUpperCase() + message.category.slice(1)}
               </span>
@@ -479,17 +475,7 @@ const Messages = () => {
                   {message.category === 'agent inquiry' ? 'Agent Consultation Request' : 'Message'}
                 </h3>
                 <div className="flex gap-2">
-                  <select
-                    value={message.status}
-                    onChange={(e) => updateMessageStatus(message.id, e.target.value)}
-                    className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
-                  >
-                    {statuses.map(status => (
-                      <option key={status} value={status}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                      </option>
-                    ))}
-                  </select>
+                  
                 </div>
               </div>
               <p className="text-gray-700 leading-relaxed">{message.message}</p>
@@ -510,53 +496,6 @@ const Messages = () => {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {/* Reply Form */}
-            {showReplyForm ? (
-              <div className="border-t pt-4">
-                <h3 className="font-semibold text-gray-800 mb-3">
-                  {message.selectedAgent ? `Reply as ${message.selectedAgent}` : 'Write Reply'}
-                </h3>
-                <textarea
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  placeholder={message.selectedAgent 
-                    ? `Respond as ${message.selectedAgent} to this consultation request...`
-                    : "Type your reply here..."
-                  }
-                  rows="4"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <div className="flex gap-2 mt-3">
-                  <button
-                    onClick={() => handleReply(message.id)}
-                    disabled={!replyText.trim()}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    Send Reply
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowReplyForm(false);
-                      setReplyText('');
-                    }}
-                    className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="border-t pt-4">
-                <button
-                  onClick={() => setShowReplyForm(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                >
-                  <Reply size={16} />
-                  {message.selectedAgent ? `Reply as ${message.selectedAgent}` : 'Reply to Message'}
-                </button>
               </div>
             )}
           </div>
@@ -643,15 +582,6 @@ const Messages = () => {
             </div>
           </div>
         </div>
-        <div className="bg-red-50 p-4 rounded-lg">
-          <div className="flex items-center gap-3">
-            <AlertCircle size={20} className="text-red-600" />
-            <div>
-              <div className="text-xs text-red-600 font-medium">Urgent</div>
-              <div className="text-xl font-bold text-red-800">{displayStats.urgent}</div>
-            </div>
-          </div>
-        </div>
         <div className="bg-green-50 p-4 rounded-lg">
           <div className="flex items-center gap-3">
             <User size={20} className="text-green-600" />
@@ -733,7 +663,6 @@ const Messages = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent/Type</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -790,12 +719,6 @@ const Messages = () => {
                         {message.status.charAt(0).toUpperCase() + message.status.slice(1)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${priorityColors[message.priority]}`}>
-                        <PriorityIcon size={14} className="mr-1" />
-                        {message.priority.charAt(0).toUpperCase() + message.priority.slice(1)}
-                      </span>
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
                         <button
@@ -810,17 +733,6 @@ const Messages = () => {
                           title="View Message"
                         >
                           <Eye size={16} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedMessage(message);
-                            setShowMessageDetails(true);
-                            setShowReplyForm(true);
-                          }}
-                          className="text-green-600 hover:text-green-900"
-                          title="Reply to Message"
-                        >
-                          <Reply size={16} />
                         </button>
                         <select
                           value={message.status}
