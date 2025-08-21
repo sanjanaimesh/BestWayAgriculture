@@ -78,7 +78,7 @@ const Products = () => {
         setLoading(true);
         setError('');
         try {
-            const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+            const response = await fetch(`http://localhost:4000/products/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

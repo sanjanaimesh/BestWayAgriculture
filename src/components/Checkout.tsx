@@ -50,115 +50,175 @@ const PaymentForm: React.FC<{
   const [processing, setProcessing] = useState(false);
   const [cardholderName, setCardholderName] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  
 
-    if (!stripe || !elements) {
-      return;
-    }
-
-    setProcessing(true);
-    setError(null);
-
-    const cardElement = elements.getElement(CardElement);
-
-    if (!cardElement) {
-      setProcessing(false);
-      return;
-    }
-
-    try {
-      // Create payment method
-      const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardElement,
-        billing_details: {
-          name: cardholderName,
-        },
-      });
-
-      if (stripeError) {
-        setError(stripeError.message || 'An error occurred with payment');
-        setProcessing(false);
-        return;
-      }
-
-      // Payment successful - now save order to database
-      const orderNum = 'BWA' + Date.now().toString().slice(-6);
-      
-      const orderData = {
-        orderNumber: orderNum,
-        customerInfo: shippingInfo,
-        items: cartItems,
-        subtotal: amount - 500, 
-        shipping: 500,
-        total: amount,
-        status: 'processing', 
-        paymentMethodId: paymentMethod.id,
-        paymentStatus: 'completed'
-      };
-
-      console.log('Attempting to save order:', orderData);
-
-      const response = await fetch('http://localhost:4000/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData),
-      });
-
-      console.log('Response status:', response.status);
-
-      const responseText = await response.text();
-      console.log('Raw response:', responseText);
-
-      let result;
+const updateProductStock = async (items) => {
+  try {
+    console.log('Updating stock for items:', items);
+    
+    // Update stock for each item in the cart
+    const stockUpdatePromises = items.map(async (item) => {
       try {
-        result = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('Failed to parse response as JSON:', parseError);
-        throw new Error(`Server returned invalid JSON. Status: ${response.status}, Response: ${responseText}`);
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${result.message || responseText}`);
-      }
-      
-      if (result.success) {
-        console.log('Order created successfully:', result);
-        setProcessing(false);
-        onSuccess({ 
-          paymentMethod, 
-          orderNumber: orderNum, 
-          orderId: result.data?.id || result.id,
-          orderData: orderData
+        const response = await fetch(`http://localhost:4000/products/${item.id}/stock`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            newStock: item.stock - item.quantity // Reduce stock by purchased quantity
+          }),
         });
-      } else {
-        throw new Error(result.message || 'Failed to create order - server returned success:false');
+
+        console.log("response:",response);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Failed to update stock for product ${item.id}:`, errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log(`Stock updated for product ${item.id}:`, result);
+        return result;
+      } catch (error) {
+        console.error(`Error updating stock for product ${item.id}:`, error);
+        throw error;
       }
-    } catch (error: any) {
-      console.error('Detailed error saving order:', error);
+    });
+
+    // Wait for all stock updates to complete
+    const results = await Promise.all(stockUpdatePromises);
+    console.log('All stock updates completed:', results);
+    
+    return results;
+  } catch (error) {
+    console.error('Error in updateProductStock:', error);
+    throw error;
+  }
+};
+
+// Modified handleSubmit function (replace the existing one)
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!stripe || !elements) {
+    return;
+  }
+
+  setProcessing(true);
+  setError(null);
+
+  const cardElement = elements.getElement(CardElement);
+
+  if (!cardElement) {
+    setProcessing(false);
+    return;
+  }
+
+  try {
+    // Create payment method
+    const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardElement,
+      billing_details: {
+        name: cardholderName,
+      },
+    });
+
+    if (stripeError) {
+      setError(stripeError.message || 'An error occurred with payment');
+      setProcessing(false);
+      return;
+    }
+
+    // Payment successful - now save order to database
+    const orderNum = 'BWA' + Date.now().toString().slice(-6);
+    
+    const orderData = {
+      orderNumber: orderNum,
+      customerInfo: shippingInfo,
+      items: cartItems,
+      subtotal: amount - 500, 
+      shipping: 500,
+      total: amount,
+      status: 'processing', 
+      paymentMethodId: paymentMethod.id,
+      paymentStatus: 'completed'
+    };
+
+    console.log('Attempting to save order:', orderData);
+
+    const response = await fetch('http://localhost:4000/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(orderData),
+    });
+
+    console.log('Response status:', response.status);
+
+    const responseText = await response.text();
+    console.log('Raw response:', responseText);
+
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse response as JSON:', parseError);
+      throw new Error(`Server returned invalid JSON. Status: ${response.status}, Response: ${responseText}`);
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${result.message || responseText}`);
+    }
+    
+    if (result.success) {
+      console.log('Order created successfully:', result);
       
-      // Check if it's a network error
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        setError('Network error: Could not connect to server. Please check if the server is running on http://localhost:4000');
-      } else if (error.message.includes('HTTP 404')) {
-        setError('Server endpoint not found. Please check if /orders endpoint exists.');
-      } else if (error.message.includes('HTTP 500')) {
-        setError('Server error occurred while saving order. Please check server logs.');
-      } else if (error.message.includes('HTTP 400')) {
-        setError(`Validation error: ${error.message}. Please check the order data format.`);
-      } else {
-        setError(`Payment successful but failed to save order: ${error.message}. Please contact support with order details.`);
+      // Update stock after successful order creation
+      try {
+        console.log('Starting stock update process...');
+        await updateProductStock(cartItems);
+        console.log('Stock update completed successfully');
+      } catch (stockError) {
+        console.error('Stock update failed:', stockError);
+        // Log the error but don't fail the entire order process
+        // You might want to implement a retry mechanism or manual stock adjustment
       }
       
       setProcessing(false);
-      
-      //log payment method details
-      console.log('Payment Method Details:', paymentMethod);
+      onSuccess({ 
+        paymentMethod, 
+        orderNumber: orderNum, 
+        orderId: result.data?.id || result.id,
+        orderData: orderData
+      });
+    } else {
+      throw new Error(result.message || 'Failed to create order - server returned success:false');
     }
-  };
+  } catch (error: any) {
+    console.error('Detailed error saving order:', error);
+    
+    // Check if it's a network error
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      setError('Network error: Could not connect to server. Please check if the server is running on http://localhost:4000');
+    } else if (error.message.includes('HTTP 404')) {
+      setError('Server endpoint not found. Please check if /orders endpoint exists.');
+    } else if (error.message.includes('HTTP 500')) {
+      setError('Server error occurred while saving order. Please check server logs.');
+    } else if (error.message.includes('HTTP 400')) {
+      setError(`Validation error: ${error.message}. Please check the order data format.`);
+    } else {
+      setError(`Payment successful but failed to save order: ${error.message}. Please contact support with order details.`);
+    }
+    
+    setProcessing(false);
+    
+    //log payment method details
+    console.log('Payment Method Details:', paymentMethod);
+  }
+};
 
   return (
     <form onSubmit={handleSubmit}>

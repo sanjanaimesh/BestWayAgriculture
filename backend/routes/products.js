@@ -35,4 +35,6 @@ router.put('/:id', validateId, validateProductUpdate, asyncHandler(ProductContro
 // Delete product
 router.delete('/:id', validateId, asyncHandler(ProductController.deleteProduct));
 
+router.put('/:id/stock',asyncHandler(ProductController.getAndUpdateStock));
+
 module.exports = router;
