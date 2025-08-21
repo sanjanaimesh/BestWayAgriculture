@@ -73,23 +73,23 @@ const rateLimiter = (req, res, next) => {
   next();
 };
 
-// Routes
+
 // POST /api/contacts - Create new contact
 router.post('/', rateLimiter, validateContactInput, contactController.createContact);
 
-// GET /api/contacts - Get all contacts (admin endpoint)
+// Get all contacts (admin endpoint)
 router.get('/', contactController.getAllContacts);
 
-// GET /api/contacts/stats - Get contact statistics
+// Get contact statistics
 router.get('/stats', contactController.getContactStats);
 
-// GET /api/contacts/:id - Get single contact by ID
+// Get single contact by ID
 router.get('/:id', contactController.getContactById);
 
-// PUT /api/contacts/:id/status - Update contact status
+// Update contact status
 router.put('/:id/status', contactController.updateContactStatus);
 
-// DELETE /api/contacts/:id - Delete contact
+// Delete contact
 router.delete('/:id', contactController.deleteContact);
 
 // Error handling middleware for this router

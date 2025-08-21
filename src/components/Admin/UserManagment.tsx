@@ -333,7 +333,7 @@ const AdminUserManagement = () => {
         setSuccess(`User role updated to ${newRole} successfully!`);
         loadUsers();
       } else {
-        setError(data.message || 'Failed to update user role');
+        setSuccess(data.message || 'Failed to update user role');
       }
     } catch (error) {
       console.error('Role update error:', error);

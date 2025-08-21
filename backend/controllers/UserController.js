@@ -172,7 +172,7 @@ class UserController {
         });
       }
 
-      // Remove password from update data (use separate endpoint for password updates)
+      // Remove password from update data 
       delete updateData.password;
 
       // Trim string values
@@ -418,9 +418,8 @@ class UserController {
 
 static updateUserRole = async (req, res) => {
     try {
-      const { id } = req.params;  // user id from URL
-      const { role } = req.body;  // new role from body
-
+      const { id } = req.params;  
+      const { role } = req.body;  
       // Check if user exists
       const user = await User.findById(id);
       if (!user) {

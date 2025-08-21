@@ -11,6 +11,7 @@ const ProductCatalog: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addedToCartId, setAddedToCartId] = useState<number | null>(null);
+  const [visibleCount, setVisibleCount] = useState(6); // show 6 products at first
 
   // Fetch seeds from API
   useEffect(() => {
@@ -40,10 +41,13 @@ const ProductCatalog: React.FC = () => {
     addToCart(product);
     setAddedToCartId(product.id);
 
-    
     setTimeout(() => {
       setAddedToCartId(null);
     }, 2000);
+  };
+
+  const handleSeeMore = () => {
+    setVisibleCount((prev) => prev + 6); // load 6 more each time
   };
 
   if (loading) {
@@ -112,80 +116,83 @@ const ProductCatalog: React.FC = () => {
             <p className="text-xl text-gray-600">No seeds found matching your search.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {filteredProducts.map((product) => (
-              <div
-                key={product.id}
-                className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
-              >
-                <div className="aspect-w-16 aspect-h-12 bg-gray-200">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-48 sm:h-52 object-cover"
-                  />
-                </div>
-                <div className="p-4 sm:p-6">
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
-                    {product.name}
-                  </h3>
-                  <p className="text-gray-600 mb-4 text-sm sm:text-base">{product.description}</p>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-xl sm:text-2xl font-bold text-green-600">
-                      LKR {product.price.toLocaleString()}
-                    </span>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {filteredProducts.slice(0, visibleCount).map((product) => (
+                <div
+                  key={product.id}
+                  className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+                >
+                  <div className="aspect-w-16 aspect-h-12 bg-gray-200">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-48 sm:h-52 object-cover"
+                    />
+                  </div>
+                  <div className="p-4 sm:p-6">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
+                      {product.name}
+                    </h3>
+                    <p className="text-gray-600 mb-4 text-sm sm:text-base">{product.description}</p>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-xl sm:text-2xl font-bold text-green-600">
+                        LKR {product.price.toLocaleString()}
+                      </span>
 
+                      {product.stock === 0 ? (
+                        <span className="text-sm text-red-500">Out of stock</span>
+                      ) : (
+                        <span className="text-sm text-gray-500">{product.stock} in stock</span>
+                      )}
+                    </div>
                     {product.stock === 0 ? (
-                      <span className="text-sm text-red-500">Out of stock</span>
+                      <button
+                        style={{ cursor: "not-allowed" }}
+                        disabled
+                        className="w-full font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center text-base bg-gray-300 text-white"
+                      >
+                        Out of Stock
+                      </button>
                     ) : (
-                      <span className="text-sm text-gray-500">{product.stock} in stock</span>
+                      <button
+                        onClick={() => handleAddToCart(product)}
+                        disabled={addedToCartId === product.id}
+                        className={`w-full font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center text-base ${addedToCartId === product.id
+                          ? 'bg-green-500 text-white cursor-not-allowed'
+                          : 'bg-green-600 hover:bg-green-700 text-white'
+                          }`}
+                      >
+                        {addedToCartId === product.id ? (
+                          <>
+                            <Check className="h-5 w-5 mr-2" />
+                            Added to Cart!
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="h-5 w-5 mr-2" />
+                            Add to Cart
+                          </>
+                        )}
+                      </button>
                     )}
                   </div>
-                   {product.stock === 0 ? (
-                      <button
-                      style={{cursor:"not-allowed"}}
-                    onClick={() => handleAddToCart(product)}
-                    disabled={true}
-                    
-                    className={`w-full font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center text-base ${addedToCartId === product.id
-                        ? 'bg-green-500 text-white cursor-not-allowed'
-                        : 'bg-green-600 hover:bg-red-700 text-white'
-                      }`}
-                  >
-                   
-                      <>
-                        <Plus className="h-5 w-5 mr-2" />
-                        Add to Cart
-                      </>
-               
-                  </button>
-                    ) : (
-                       <button
-                    onClick={() => handleAddToCart(product)}
-                    disabled={addedToCartId === product.id}
-                    className={`w-full font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center text-base ${addedToCartId === product.id
-                        ? 'bg-green-500 text-white cursor-not-allowed'
-                        : 'bg-green-600 hover:bg-green-700 text-white'
-                      }`}
-                  >
-                    {addedToCartId === product.id ? (
-                      <>
-                        <Check className="h-5 w-5 mr-2" />
-                        Added to Cart!
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="h-5 w-5 mr-2" />
-                        Add to Cart
-                      </>
-                    )}
-                  </button>
-                    )}
-                 
                 </div>
+              ))}
+            </div>
+
+            {/* See More Button */}
+            {visibleCount < filteredProducts.length && (
+              <div className="flex justify-center mt-10">
+                <button
+                  onClick={handleSeeMore}
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                >
+                  See More
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </section>

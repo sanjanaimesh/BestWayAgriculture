@@ -42,7 +42,7 @@ router.get('/info', (req, res) => {
   });
 });
 
-// Legacy routes for backward compatibility
+
 router.get('/addcart', (req, res) => {
   res.json({
     success: true,

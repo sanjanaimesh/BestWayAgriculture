@@ -14,16 +14,16 @@ router.get('/', asyncHandler(ProductController.getAllProducts));
 // Get all categories
 router.get('/categories', asyncHandler(ProductController.getCategories));
 
-// Search products (must be before /:id route)
+// Search products 
 router.get('/search', validateSearchQuery, asyncHandler(ProductController.searchProducts));
 
-// Get products by category (must be before /:id route)
+// Get products by category 
 router.get('/category/:category', asyncHandler(ProductController.getProductsByCategory));
 
 // Get product by ID
 router.get('/:id', validateId, asyncHandler(ProductController.getProductById));
 
-// Get product by name (alternative endpoint)
+// Get product by name 
 router.get('/name/:name', asyncHandler(ProductController.getProductByName));
 
 // Create new product

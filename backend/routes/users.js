@@ -21,7 +21,7 @@ router.post('/login', UserController.login);
 router.get('/check-username/:username', UserController.checkUsername);
 router.get('/check-email/:email', UserController.checkEmail);
 
-// User profile routes - FIXED: Correct order and paths
+// User profile routes 
 router.get('/profile/:id', UserController.getProfile);
 router.put('/profile/:id', UserController.updateProfile);
 
@@ -29,11 +29,11 @@ router.put('/profile/:id', UserController.updateProfile);
 router.get('/:id', UserController.getProfile);
 router.put('/:id', UserController.updateProfile);
 
-// Password update route - FIXED: Consistent with profile routes
+// Password update route 
 router.put('/:id/password', UserController.updatePassword);
-router.put('/password/:id', UserController.updatePassword); // Keep both for compatibility
+router.put('/password/:id', UserController.updatePassword); 
 
-// Admin routes (in a real application, these would require admin authentication middleware)
+// Admin routes 
 router.get('/', UserController.getAllUsers);
 router.get('/stats', UserController.getUserStats);
 router.delete('/:id', UserController.deactivateUser);

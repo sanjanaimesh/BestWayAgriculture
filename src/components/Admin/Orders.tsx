@@ -717,12 +717,7 @@ const Orders = () => {
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-800">Order Details - {order.order_number}</h2>
               <div className="flex items-center gap-2">
-                {/* <button
-                  onClick={() => setEditingOrder(order)}
-                  className="text-blue-600 hover:text-blue-800 p-2"
-                >
-                  <Edit size={20} />
-                </button> */}
+                
                 <button
                   onClick={() => deleteOrder(order.id)}
                   className="text-red-600 hover:text-red-800 p-2"
@@ -850,13 +845,7 @@ const Orders = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Orders Management</h1>
-        {/* <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-        >
-          <Plus size={20} />
-          New Order
-        </button> */}
+        
       </div>
 
       {error && (
@@ -1042,18 +1031,7 @@ const Orders = () => {
                         >
                           <Eye size={16} />
                         </button>
-                        {/* <button
-                          onClick={async () => {
-                            const orderWithItems = await fetchOrderWithItems(order.id);
-                            if (orderWithItems) {
-                              setEditingOrder(orderWithItems);
-                            }
-                          }}
-                          className="text-green-600 hover:text-green-900 p-1"
-                          title="Edit Order"
-                        >
-                          <Edit size={16} />
-                        </button> */}
+                        
                         <button
                           onClick={() => deleteOrder(order.id)}
                           className="text-red-600 hover:text-red-900 p-1"

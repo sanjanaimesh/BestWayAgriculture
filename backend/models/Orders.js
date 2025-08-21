@@ -98,12 +98,12 @@ class Order {
     const connection = await pool.getConnection();
     
     try {
-      // Generate order number if not provided
+      
       if (!this.order_number) {
         this.order_number = Order.generateOrderNumber();
       }
 
-      // Validate before saving
+      
       const validationErrors = this.validate();
       if (validationErrors.length > 0) {
         throw new Error(`Validation failed: ${validationErrors.join(', ')}`);
@@ -345,7 +345,7 @@ class Order {
         }
       }
 
-      // Delete order items first (foreign key constraint)
+      // Delete order items first 
       await connection.execute('DELETE FROM order_items WHERE order_id = ?', [this.id]);
 
       // Delete the main order record
@@ -367,7 +367,7 @@ class Order {
     }
   }
 
-  // Delete order by ID (static method)
+  // Delete order by ID 
   static async deleteById(id) {
     try {
       const order = await Order.findById(id);
