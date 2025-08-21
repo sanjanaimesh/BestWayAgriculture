@@ -263,7 +263,7 @@ const Orders = () => {
     }
   };
 
-  // Update order status quickly
+  // Update order status 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       console.log(`Updating order ${orderId} status to: ${newStatus}`);
@@ -441,7 +441,7 @@ const Orders = () => {
               </button>
             </div>
           </div>
-
+        
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -1042,7 +1042,7 @@ const Orders = () => {
                         >
                           <Eye size={16} />
                         </button>
-                        <button
+                        {/* <button
                           onClick={async () => {
                             const orderWithItems = await fetchOrderWithItems(order.id);
                             if (orderWithItems) {
@@ -1053,7 +1053,7 @@ const Orders = () => {
                           title="Edit Order"
                         >
                           <Edit size={16} />
-                        </button>
+                        </button> */}
                         <button
                           onClick={() => deleteOrder(order.id)}
                           className="text-red-600 hover:text-red-900 p-1"
