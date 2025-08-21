@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const UserController = require('../controllers/UserController');
 const User = require('../models/User');
+const { asyncHandler } = require('../middleware/errorHandling');
 
 // Middleware for request validation and logging
 const requestLogger = (req, res, next) => {
@@ -37,6 +38,9 @@ router.get('/', UserController.getAllUsers);
 router.get('/stats', UserController.getUserStats);
 router.delete('/:id', UserController.deactivateUser);
 router.put('/restore/:id', UserController.restoreUser);
+
+router.put("/:id/role",asyncHandler(UserController.updateUserRole));
+
 
 // Route to initialize database table
 router.post('/initialize', async (req, res) => {

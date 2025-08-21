@@ -73,7 +73,7 @@ class UserController {
     }
   }
 
-  // Get user profile - FIXED: Better error handling and response format
+  // Get user profile 
   static async getProfile(req, res) {
     try {
       const userId = req.params.id;
@@ -96,7 +96,7 @@ class UserController {
         });
       }
 
-      // FIXED: Return user data directly in the expected format
+      // Return user data directly in the expected format
       res.json({
         success: true,
         message: 'User profile retrieved successfully',
@@ -156,7 +156,7 @@ class UserController {
     }
   }
 
-  // Update user profile - FIXED: Correct response format and error handling
+  // Update user profile
   static async updateProfile(req, res) {
     try {
       const userId = req.params.id;
@@ -193,7 +193,7 @@ class UserController {
         });
       }
 
-      // FIXED: Return user data in the expected format for frontend
+      //Return user data in the expected format for frontend
       res.json({
         success: true,
         message: 'Profile updated successfully',
@@ -223,7 +223,7 @@ class UserController {
     }
   }
 
-  // Update password - FIXED: Better error handling
+  // Update password 
   static async updatePassword(req, res) {
     try {
       const userId = req.params.id;
@@ -415,6 +415,30 @@ class UserController {
       });
     }
   }
+
+static updateUserRole = async (req, res) => {
+    try {
+      const { id } = req.params;  // user id from URL
+      const { role } = req.body;  // new role from body
+
+      // Check if user exists
+      const user = await User.findById(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Update role
+      const updatedUser = await User.updateRole(id, role);
+
+      return res.status(200).json({
+        message: "Role updated successfully",
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Error in updateUserRole:", error);
+      return res.status(500).json({ message: "Server error", error: error.message });
+    }
+  };
 
   // Check email availability
   static async checkEmail(req, res) {
