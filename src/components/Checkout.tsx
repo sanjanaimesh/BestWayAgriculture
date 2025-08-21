@@ -9,8 +9,7 @@ import {
   useElements,
 } from '@stripe/react-stripe-js';
 
-// Initialize Stripe with your publishable key
-// Replace with your actual Stripe publishable key
+
 const stripePromise = loadStripe('pk_test_51RvJvWCs4Jxtyk6HXo6CViF3dFngVOZbruNw8Ii6RMcrarq0oWE9evWhYbp0JFVj9JwSz6RxzU1SxU1fHHfcChnY00m7xqMabW');
 
 interface CheckoutProps {
@@ -156,7 +155,7 @@ const PaymentForm: React.FC<{
       
       setProcessing(false);
       
-      // For debugging - log payment method details
+      //log payment method details
       console.log('Payment Method Details:', paymentMethod);
     }
   };
@@ -220,8 +219,6 @@ const PaymentForm: React.FC<{
           <div className="mt-2 text-xs text-red-600">
             <p>If this error persists:</p>
             <ul className="list-disc list-inside mt-1">
-              <li>Check browser console for detailed logs</li>
-              <li>Verify backend server is running on port 4000</li>
               <li>Contact support with your order details</li>
             </ul>
           </div>
@@ -387,7 +384,7 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
               </p>
             </div>
             <p className="text-sm text-gray-600 mb-6">
-              You will receive an email confirmation shortly. Our team will contact you within 24 hours to confirm delivery details.
+              Our team will contact you within 24 hours by email or phone to confirm delivery details.
             </p>
             <button
               onClick={handleClose}
