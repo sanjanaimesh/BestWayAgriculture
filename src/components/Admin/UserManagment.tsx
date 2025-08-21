@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, UserPlus, Edit, Trash2, Eye, Mail, Phone, MapPin, Calendar, User, AlertTriangle, Check, X } from 'lucide-react';
+import { Search, Filter, UserPlus, Edit, Trash2, Eye, Mail, Phone, MapPin, Calendar, User, AlertTriangle, Check, X, Shield, ShieldCheck } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:4000';
 
@@ -58,6 +58,7 @@ const AdminUserManagement = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserDetails, setShowUserDetails] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
+  const [showRoleConfirm, setShowRoleConfirm] = useState<{ userId: number; newRole: 'admin' | 'user' } | null>(null);
 
   const [formData, setFormData] = useState<UserFormData>({
     firstName: '',
@@ -328,6 +329,42 @@ const AdminUserManagement = () => {
     } finally {
       setLoading(false);
       setShowDeleteConfirm(null);
+    }
+  };
+
+  // New function to handle role updates
+  const handleRoleUpdate = async (userId: number, newRole: 'admin' | 'user') => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      console.log('Updating user role:', { userId, newRole });
+      
+      const response = await fetch(`${API_BASE_URL}/users/${userId}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ role: newRole })
+      });
+
+      const data = await response.json();
+      console.log('Role update response:', data);
+
+      if (response.ok && data.success) {
+        setSuccess(`User role updated to ${newRole} successfully!`);
+        loadUsers();
+        loadUserStats();
+      } else {
+        setError(data.message || 'Failed to update user role');
+      }
+    } catch (error) {
+      console.error('Role update error:', error);
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+      setShowRoleConfirm(null);
     }
   };
 
@@ -659,7 +696,7 @@ const AdminUserManagement = () => {
                   <select
                     name="role"
                     value={formData.role}
-                    onChange={handleInputChange}
+                    onChange={handleRoleUpdate()}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="user">User</option>

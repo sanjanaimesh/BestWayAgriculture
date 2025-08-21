@@ -392,14 +392,14 @@ class User {
   }
 
   // Find user by ID (helper function)
-  static async findById(id) {
-    try {
-      const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
-      return rows[0];
-    } catch (error) {
-      throw error;
-    }
-  }
+  // static async findById(id) {
+  //   try {
+  //     const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
+  //     return rows[0];
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // }
 
   // Authenticate user
   static async authenticate(identifier, password) {
